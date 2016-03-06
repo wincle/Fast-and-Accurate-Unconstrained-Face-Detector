@@ -108,10 +108,14 @@ void GAB::LearnGAB(Mat faceFea, Mat nonfaceFea){
     nPosSam = posIndex.size();
     nNegSam = negIndex.size();
     int minLeaf_t = max( round((nPosSam+nNegSam+0.5)*opt.minLeafFrac),opt.minLeaf);
-//    printf("Iter %d: nPos=%d, nNeg=%d, ", t, nPosSam, nNegSam);
+    printf("Iter %d: nPos=%d, nNeg=%d, ", t, nPosSam, nNegSam);
+
+    vector<int> feaId, leftChild, rightChild;
+    vector< vector<unsigned char> > cutpoint;
+    vector<float> fit;
 
     DQT dqt;
-    dqt.LearnDQT(faceFea,nonfaceFea,posW,negW,posFx,negFx,posIndex,negIndex,minLeaf_t);
+    float mincost = dqt.Learn(faceFea,nonfaceFea,posW,negW,posFx,negFx,posIndex,negIndex,minLeaf_t,feaId,leftChild,rightChild,cutpoint,fit);
 
 
 
