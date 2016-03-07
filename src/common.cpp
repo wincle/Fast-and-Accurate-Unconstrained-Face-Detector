@@ -14,13 +14,13 @@ Options::Options(){ //default value
   minSamples = 100;
   faceDBFile = "../data/FaceDB.txt";
   nonfaceDBFile = "../data/NonfaceDB.txt";
-  outFile = "../result.txt";
+  outFile = "../result";
   treeLevel = 4; 
   maxNumWeaks = 1000;
   minDR = 1.0;
   maxFAR = 1e-16;
   minSamples = 10;
-  minNegRatio = 0.2;
+  minNegRatio = 1;
   trimFrac = 0.05;
   samFrac = 1.0;
   minLeafFrac = 0.01;

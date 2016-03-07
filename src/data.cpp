@@ -60,21 +60,24 @@ void DataSet::LoadNegativeDataSet(const string& negative, int pos_num){
   }
   size = pos_num;
   imgs.resize(size);
-  x = y = 0;
   current_idx = 0;
-  transform_type = ORIGIN;
   random_shuffle(list.begin(),list.end());
   MoreNeg(ceil(size*opt.negRatio));
 }
 void DataSet::MoreNeg(const int n){
   const Options& opt = Options::GetInstance();
   int pool_size = omp_get_max_threads();
-  imgs.resize(size+pool_size+1);
+  imgs.resize(size+pool_size);
   vector<Mat> region_pool(pool_size);
   int num = 0;
+  srand(time(0));
   while(num<n){
-    for(int i = 0;i<pool_size;i++)
-      region_pool[i] = NextImage();
+    current_idx = rand()%list.size();
+    img = imread(list[current_idx], CV_LOAD_IMAGE_GRAYSCALE);
+//    #pragma omp parallel for
+    for(int i = 0;i<pool_size;i++){
+      region_pool[i] = NextImage(i);
+    }
     for (int i = 0; i < pool_size; i++) {
       imgs[num]=region_pool[i].clone();
       num ++;
@@ -82,134 +85,27 @@ void DataSet::MoreNeg(const int n){
   }
 }
 
-Mat DataSet::NextImage() {
+Mat DataSet::NextImage(int i) {
   const Options& opt = Options::GetInstance();
   const int w = opt.objSize;
   const int h = opt.objSize;
 
-  NextState();
 
-  Mat region(opt.objSize,opt.objSize,CV_8UC1);
-  Rect roi(x, y, w, h);
-  Mat img = imread(list[current_idx], CV_LOAD_IMAGE_GRAYSCALE);
-  region = img(roi).clone();
-
-  switch (transform_type) {
-    case ORIGIN:
-      break;
-    case ORIGIN_R:
-      flip(region, region, 0);
-      transpose(region, region);
-      break;
-    case ORIGIN_RR:
-      flip(region, region, -1);
-      break;
-    case ORIGIN_RRR:
-      flip(region, region, 1);
-      transpose(region, region);
-      break;
-    case ORIGIN_FLIP:
-      flip(region, region, 1);
-      break;
-    case ORIGIN_FLIP_R:
-      flip(region, region, -1);
-      transpose(region, region);
-      break;
-    case ORIGIN_FLIP_RR:
-      flip(region, region, -1);
-      flip(region, region, 1);
-      break;
-    case ORIGIN_FLIP_RRR:
-      flip(region, region, 0);
-      transpose(region, region);
-      flip(region, region, 1);
-      break;
-    default:
-      printf("Unsupported Transform of Negative Sample\n");
-      break;
-  }
-  return region;
-}
-
-void DataSet::NextState() {
-  const Options& opt = Options::GetInstance();
-  const double scale_factor = 0.8;
-  const int w = opt.objSize;
-  const int h = opt.objSize;
-  const int x_step = w/4;
-  const int y_step = w/4;
-  Mat img = imread(list[current_idx], CV_LOAD_IMAGE_GRAYSCALE);
+  srand(time(0)*(i+1));
 
   const int width = img.cols;
   const int height = img.rows;
+  int x=0,y=0,s=0;
 
-  switch (transform_type) {
-    case ORIGIN:
-      transform_type = ORIGIN_R;
-      return;
-    case ORIGIN_R:
-      transform_type = ORIGIN_RR;
-      return;
-    case ORIGIN_RR:
-      transform_type = ORIGIN_RRR;
-      return;
-    case ORIGIN_RRR:
-      transform_type = ORIGIN_FLIP;
-      return;
-    case ORIGIN_FLIP:
-      transform_type = ORIGIN_FLIP_R;
-      return;
-    case ORIGIN_FLIP_R:
-      transform_type = ORIGIN_FLIP_RR;
-      return;
-    case ORIGIN_FLIP_RR:
-      transform_type = ORIGIN_FLIP_RRR;
-      return;
-    case ORIGIN_FLIP_RRR:
-      transform_type = ORIGIN;
-      break;
-    default:
-      printf("Unsupported Transform of Negative Sample\n");
-      break;
-  }
+  s = w+rand()%(min(width,height)-w);
+  x = rand()%(width-s);
+  y = rand()%(height-s);
 
-  x += x_step; // move x
-  if (x + w >= width) {
-    x = 0;
-    y += y_step; // move y
-    if (y + h >= height) {
-      x = y = 0;
-      int width_ = int(img.cols * scale_factor);
-      int height_ = int(img.rows * scale_factor);
-      cv::resize(img, img, Size(width_, height_)); // scale image
-      if (img.cols < w || img.rows < h) {
-        // next image
-        while (true) {
-          current_idx++; // next image
-          if (current_idx >= list.size()) {
-            // Add background image list online
-            printf("Run out of Negative Samples! :-(\n");
-            continue;
-          }
-          //LOG("Use %d th Nega Image %s", current_idx + 1, list[current_idx].c_str());
-          img = cv::imread(list[current_idx], 0);
-          if (!img.data || img.cols <= w || img.rows <= h) {
-            if (!img.data) {
-              //LOG("Can not open image %s, Skip it", list[current_idx].c_str());
-            }
-            else {
-              //LOG("Image %s is too small, Skip it", list[current_idx].c_str());
-            }
-          }
-          else {
-            // successfully get another background image
-            break;
-          }
-        }
-      }
-    }
-  }
+  Rect roi(x, y, s, s);
+
+  Mat crop_img = img(roi);
+  Mat region;
+  resize(crop_img,region,Size(w,h));
+
+  return region;
 }
-
-
-
