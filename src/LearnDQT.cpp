@@ -1,6 +1,6 @@
 #include "LearnDQT.hpp"
 
-float DQT::Learn(cv::Mat posX,cv::Mat negX, float pPosW[], float pNegW[], float pPosFx[], float pNegFx[], vector<int> posIndex,vector<int> negIndex, int minLeaf, vector<int> &feaId, vector<int> &leftChild, vector<int> &rightChild, vector< vector<unsigned char> > &cutpoint, vector<float> &fit){
+float DQT::Learn(cv::Mat posX,cv::Mat negX, float pPosW[], float pNegW[], vector<int> posIndex,vector<int> negIndex, int minLeaf, vector<int> &feaId, vector<int> &leftChild, vector<int> &rightChild, vector< vector<unsigned char> > &cutpoint, vector<float> &fit){
   const Options& opt = Options::GetInstance();
   int treeLevel = opt.treeLevel;
   int numThreads = omp_get_num_procs();
@@ -23,25 +23,22 @@ float DQT::Learn(cv::Mat posX,cv::Mat negX, float pPosW[], float pNegW[], float 
 
   for(int i =0;i<nPos;i++)
     pPosIndex[i]=posIndex[i];
-  for(int i =0;i<nPos;i++)
+  for(int i =0;i<nNeg;i++)
     pNegIndex[i]=negIndex[i];
 
-  float minCost = LearnDQT(ppPosX, ppNegX, pPosW, pNegW, pPosFx, pNegFx, pPosIndex, pNegIndex, nPos, nNeg, treeLevel, minLeaf, numThreads, 0, feaId, cutpoint, leftChild, rightChild, fit);
+  float minCost = LearnDQT(ppPosX, ppNegX, pPosW, pNegW, pPosIndex, pNegIndex, nPos, nNeg, treeLevel, minLeaf, numThreads, 0, feaId, cutpoint, leftChild, rightChild, fit);
 
   return minCost;
 
 }
 
-float DQT::LearnDQT(vector<unsigned char *> &posX, vector<unsigned char *> &negX, float *posW, float *negW, float *posFx, float *negFx, 
-    int *posIndex, int *negIndex, int nPos, int nNeg, int treeLevel, int minLeaf, int numThreads, float parentFit,
-    vector<int> &feaId, vector< vector<unsigned char> > &cutpoint, vector<int> &leftChild, vector<int> &rightChild, vector<float> &fit)
+float DQT::LearnDQT(vector<unsigned char *> &posX, vector<unsigned char *> &negX, float *posW, float *negW, int *posIndex, int *negIndex, int nPos, int nNeg, int treeLevel, int minLeaf, int numThreads, float parentFit, vector<int> &feaId, vector< vector<unsigned char> > &cutpoint, vector<int> &leftChild, vector<int> &rightChild, vector<float> &fit)
 {
   int _feaId;
   unsigned char _cutpoint[2];
   float _fit[2];
 
-  float minCost = LearnQuadStump(posX, negX, posW, negW, posFx, negFx, posIndex, negIndex, nPos, nNeg, minLeaf, numThreads, parentFit, 
-      _feaId, _cutpoint, _fit);
+  float minCost = LearnQuadStump(posX, negX, posW, negW, posIndex, negIndex, nPos, nNeg, minLeaf, numThreads, parentFit,  _feaId, _cutpoint, _fit);
 
   if(_feaId < 0) return minCost;
 
@@ -88,9 +85,9 @@ float DQT::LearnDQT(vector<unsigned char *> &posX, vector<unsigned char *> &negX
   vector< vector<unsigned char> > cutpoint1, cutpoint2;
   vector<float> fit1, fit2;
 
-  float minCost1 = LearnDQT(posX, negX, posW, negW, posFx, negFx, &posIndex1[0], &negIndex1[0], nPos1, nNeg1, treeLevel - 1, minLeaf, numThreads, _fit[0], feaId1, cutpoint1, leftChild1, rightChild1, fit1);
+  float minCost1 = LearnDQT(posX, negX, posW, negW, &posIndex1[0], &negIndex1[0], nPos1, nNeg1, treeLevel - 1, minLeaf, numThreads, _fit[0], feaId1, cutpoint1, leftChild1, rightChild1, fit1);
 
-  float minCost2 = LearnDQT(posX, negX, posW, negW, posFx, negFx, &posIndex2[0], &negIndex2[0], nPos2, nNeg2, treeLevel - 1, minLeaf, numThreads, _fit[1], feaId2, cutpoint2, leftChild2, rightChild2, fit2);
+  float minCost2 = LearnDQT(posX, negX, posW, negW, &posIndex2[0], &negIndex2[0], nPos2, nNeg2, treeLevel - 1, minLeaf, numThreads, _fit[1], feaId2, cutpoint2, leftChild2, rightChild2, fit2);
 
   if(feaId1.empty() && feaId2.empty())
   {
@@ -161,9 +158,7 @@ float DQT::LearnDQT(vector<unsigned char *> &posX, vector<unsigned char *> &negX
 }
 
 
-float DQT::LearnQuadStump(vector<unsigned char *> &posX, vector<unsigned char *> &negX, float *posW, float *negW, float *posFx, float *negFx, 
-    int *posIndex, int *negIndex, int nPos, int nNeg, int minLeaf, int numThreads, float parentFit,
-    int &feaId, unsigned char (&cutpoint)[2], float (&fit)[2])
+float DQT::LearnQuadStump(vector<unsigned char *> &posX, vector<unsigned char *> &negX, float *posW, float *negW, int *posIndex, int *negIndex, int nPos, int nNeg, int minLeaf, int numThreads, float parentFit, int &feaId, unsigned char (&cutpoint)[2], float (&fit)[2])
 {
   float w = 0;
   for(int i = 0; i < nPos; i++) w += posW[ posIndex[i] ];

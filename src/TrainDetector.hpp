@@ -7,6 +7,7 @@ class TrainDetector{
     int numFaces;
     int numNegs;
   public:
+    cv::Mat ppNpdTable;
     TrainDetector();
     void Train();
     cv::Mat Extract(DataSet data);
