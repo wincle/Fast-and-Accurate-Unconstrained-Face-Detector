@@ -59,30 +59,45 @@ void DataSet::LoadNegativeDataSet(const string& negative, int pos_num){
     list.push_back(buff);
   }
   size = pos_num;
-  imgs.resize(size);
   current_idx = 0;
   random_shuffle(list.begin(),list.end());
-  MoreNeg(ceil(size*opt.negRatio));
+  imgs.reserve(size + omp_get_max_threads());
+  GAB blank;
+  MoreNeg(ceil(size*opt.negRatio),blank);
 }
-void DataSet::MoreNeg(const int n){
+void DataSet::MoreNeg(const int n,GAB Gab){
   const Options& opt = Options::GetInstance();
   int pool_size = omp_get_max_threads();
-  imgs.resize(size+pool_size);
   vector<Mat> region_pool(pool_size);
   int num = 0;
   srand(time(0));
+
+  int fails = 0;
+
   while(num<n){
     current_idx = rand()%list.size();
     img = imread(list[current_idx], CV_LOAD_IMAGE_GRAYSCALE);
-//    #pragma omp parallel for
+    #pragma omp parallel for
     for(int i = 0;i<pool_size;i++){
       region_pool[i] = NextImage(i);
     }
     for (int i = 0; i < pool_size; i++) {
-      imgs[num]=region_pool[i].clone();
-      num ++;
+      Mat tImg = region_pool[i].clone();
+      if(Gab.stages!=0){
+        if(Gab.NPDClassify(tImg)){
+          imgs.push_back(tImg);
+          num ++;
+        }
+        else
+          fails++;
+      }
+      else{
+        imgs.push_back(tImg);
+        num ++;
+      }
     }
   }
+  printf("mining success rate %f\n",float(num)/float(fails));
 }
 
 Mat DataSet::NextImage(int i) {
@@ -108,4 +123,16 @@ Mat DataSet::NextImage(int i) {
   resize(crop_img,region,Size(w,h));
 
   return region;
+}
+
+void DataSet::Remove(vector<int> PassIndex, GAB Gab){
+  int passNum = PassIndex.size();
+
+  vector<Mat> tmps;
+
+  for(int i = 0;i<passNum;i++)
+    tmps.push_back(imgs[PassIndex[i]]);
+
+  imgs = tmps;
+  MoreNeg(size-imgs.size(),Gab);
 }
