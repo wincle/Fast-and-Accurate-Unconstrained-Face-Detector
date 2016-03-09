@@ -1,5 +1,6 @@
+#ifndef _DATA_HPP
+#define _DATA_HPP
 #include "common.hpp"
-#include "LearnGAB.hpp"
 #include <vector>
 #include <opencv2/core/core.hpp>
 
@@ -9,16 +10,27 @@ class DataSet {
     static void LoadDataSet(DataSet& pos, DataSet& neg);
     void LoadPositiveDataSet(const std::string& positive);
     void LoadNegativeDataSet(const std::string& negative,const int pos_num);
-    void MoreNeg(int ,GAB Gab);
     cv::Mat NextImage(int);
-    void Remove(vector<int>,GAB Gab);
+    void MoreNeg(int );
+    void Remove(vector<int>);
+    void ImgClear();
+    void initWeights();
+    cv::Mat Extract();
+    void Clear();
+    void CalcWeight(int y, int maxWeight);
   public:
+    cv::Mat ppNpdTable;
     std::vector<cv::Mat> imgs;
-    bool is_pos;
     int size;
-  private:
-    //for neg
+
+    float *W;
+    float *Fx;
+    
+
+    //neg only
     std::vector<std::string> list;
-    int current_idx;
     cv::Mat img;
+
+
 };
+#endif

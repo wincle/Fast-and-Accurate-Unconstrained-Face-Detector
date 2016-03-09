@@ -12,7 +12,6 @@ class Options{
     }
     int objSize;
     double negRatio;
-    int finalNegs;
     int numFaces;
     int numThreads;
     string faceDBFile;

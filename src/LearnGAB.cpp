@@ -1,17 +1,19 @@
 #include "LearnGAB.hpp"
 #include <math.h>
-#include<sys/time.h>
+#include <sys/time.h>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 #define max(a, b)  (((a) > (b)) ? (a) : (b))
 #define min(a, b)  (((a) < (b)) ? (a) : (b))
 
 using namespace cv;
 
-GAB::GAB(){
+GAB::GAB(int size){
   const Options& opt = Options::GetInstance();
   stages = 0;
-  ppNpdTable = Mat(256,256,CV_8UC1);
 
+  ppNpdTable = Mat(256,256,CV_8UC1);
   for(int i = 0; i < 256; i++)
   {
     for(int j = 0; j < 256; j++)
@@ -37,69 +39,42 @@ GAB::GAB(){
 
 }
 
-vector<int> GAB::LearnGAB(Mat& faceFea, Mat& nonfaceFea){
+void GAB::LearnGAB(DataSet& pos, DataSet& neg){
   const Options& opt = Options::GetInstance();
-  timeval start, end;
-  int nPos = faceFea.cols;
-  int nNeg = nonfaceFea.cols;
-  float *posW = new float[nPos];
-  for(int i = 0;i<nPos;i++)
-    posW[i]=1./nPos;
-  float *negW = new float[nNeg];
-  for(int i = 0;i<nNeg;i++)
-    negW[i]=1./nNeg;
-  float *posFx = new float[nPos];
-  float *negFx = new float[nNeg];
-  for(int i = 0;i<nPos;i++)
-        posFx[i]=0;
-  for(int i = 0;i<nNeg;i++)
-        negFx[i]=0;
-  vector<int> negPassIndex;
-  negPassIndex.reserve(nNeg);
-  for(int i=0; i<nPos; i++)
-    negPassIndex.push_back(i);
-  int nNegPass = nNeg;
-//  printf("Start to train AdaBoost. nPos=%d, nNeg=%d\n\n", nPos, nNeg);
+//  timeval start, end;
+//  timeval Tstart, Tend;
+  int nPos = pos.size;
+  int nNeg = neg.size;
 
-  float FAR=1.0;
+  Mat faceFea = pos.Extract();
+  pos.ImgClear();
+  printf("Extract pos feature finish\n");
+  Mat nonfaceFea = neg.Extract();
+  printf("Extract neg feature finish\n");
+
+  float _FAR=1.0;
   int nFea=0;
   float aveEval=0;
 
+
+  float *w = new float[nPos];
   for (int t = stages;t<opt.maxNumWeaks;t++){
-    gettimeofday(&start,NULL);
-    if (nNegPass < opt.minSamples){
-      printf("\nNo enough negative samples. The AdaBoost learning terminates at iteration %d. nNegPass = %d.\n", t - 1, nNegPass);
-      break;
-    }
-    int nPosSam = max(round(nPos * opt.samFrac),opt.minSamples);
+    printf("0\n");
+    printf("start training %d stages \n",t);
+//    gettimeofday(&start,NULL);
+
+
     vector<int> posIndex;
-    posIndex.reserve(nPos);
+    vector<int> negIndex;
     for(int i=0; i<nPos; i++)
       posIndex.push_back(i);
-    for(int i=0; i<nPos; i++) {
-      int j = rand()%(nPos-i)+i;
-      swap(posIndex[j],posIndex[i]);
-    }
-    posIndex.erase(posIndex.begin()+nPosSam,posIndex.end());
-
-    int nNegSam = max(round(nNegPass * opt.samFrac), opt.minSamples);
-    vector<int> negIndex;
-    negIndex.reserve(nNegPass);
-    for(int i=0; i<nNegPass; i++)
+    for(int i=0; i<nNeg; i++)
       negIndex.push_back(i);
-    for(int i=0; i<nNegPass; i++) {
-      int j = rand()%(nNegPass-i)+i;
-      swap(negIndex[j],negIndex[i]);
-    }
 
-    negIndex.erase(negIndex.begin()+nNegSam,negIndex.end());
-    for(int i = 0;i < nNegSam;i++){
-      negIndex[i] = negPassIndex[negIndex[i]];
-    }
-    
+    printf("1\n");
+
     //trim weight
-    float *w = new float[nPos];
-    memcpy(w,posW,nPos*sizeof(float));
+    memcpy(w,pos.W,nPos*sizeof(float));
     std::sort(&w[0],&w[nPos]);
     int k; 
     float wsum;
@@ -110,17 +85,16 @@ vector<int> GAB::LearnGAB(Mat& faceFea, Mat& nonfaceFea){
         break;
       }
     }
-    k = min(k,nPosSam-opt.minSamples+1);
     vector< int >::iterator iter;
     for(iter = posIndex.begin();iter!=posIndex.end();){
-      if(posW[*iter]<w[k])
+      if(pos.W[*iter]<w[k])
         iter = posIndex.erase(iter);
       else
         ++iter;
     }
 
     wsum = 0;
-    memcpy(w,negW,nNeg*sizeof(float));
+    memcpy(w,neg.W,nNeg*sizeof(float));
     std::sort(&w[0],&w[nNeg]);
     for(int i =0;i<nNeg;i++){
       wsum += w[i];
@@ -129,24 +103,31 @@ vector<int> GAB::LearnGAB(Mat& faceFea, Mat& nonfaceFea){
         break;
       }
     }
-    k = min(k,nNegSam-opt.minSamples+1);
     for(iter = negIndex.begin();iter!=negIndex.end();){
-      if(negW[*iter]<w[k])
+      if(neg.W[*iter]<w[k])
         iter = negIndex.erase(iter);
       else
         ++iter;
     }
 
-    nPosSam = posIndex.size();
-    nNegSam = negIndex.size();
+    int nPosSam = posIndex.size();
+    int nNegSam = negIndex.size();
+
     int minLeaf_t = max( round((nPosSam+nNegSam)*opt.minLeafFrac),opt.minLeaf);
 
     vector<int> feaId, leftChild, rightChild;
     vector< vector<unsigned char> > cutpoint;
     vector<float> fit;
+    printf("2\n");
 
+    printf("Iter %d: nPos=%d, nNeg=%d, ", t, nPosSam, nNegSam);
     DQT dqt;
-    float mincost = dqt.Learn(faceFea,nonfaceFea,posW,negW,posIndex,negIndex,minLeaf_t,feaId,leftChild,rightChild,cutpoint,fit);
+//    gettimeofday(&Tstart,NULL);
+    float mincost = dqt.Learn(faceFea,nonfaceFea,pos.W,neg.W,posIndex,negIndex,minLeaf_t,feaId,leftChild,rightChild,cutpoint,fit);
+//    gettimeofday(&Tend,NULL);
+//    float Ttime = (Tend.tv_sec - Tstart.tv_sec)*1000+(Tend.tv_usec - Tstart.tv_usec)/1000;
+
+    printf("3\n");
 
     if (feaId.empty()){
       printf("\n\nNo available features to satisfy the split. The AdaBoost learning terminates.\n");
@@ -162,43 +143,48 @@ vector<int> GAB::LearnGAB(Mat& faceFea, Mat& nonfaceFea){
       for(int j = 0;j<nonfaceFea.cols;j++)
         negX.at<uchar>(i,j) = nonfaceFea.at<uchar>(feaId[i],j);
 
-    TestDQT(posFx,fit,cutpoint,leftChild,rightChild,posX);
-    TestDQT(negFx,fit,cutpoint,leftChild,rightChild,negX,negPassIndex);
+    TestDQT(pos.Fx,fit,cutpoint,leftChild,rightChild,posX);
+    TestDQT(neg.Fx,fit,cutpoint,leftChild,rightChild,negX);
     
-    memcpy(w,posFx,nPos*sizeof(float));
+
+    vector<int> negPassIndex;
+    for(int i=0; i<nNegSam; i++)
+      negPassIndex.push_back(i);
+
+    memcpy(w,pos.Fx,nPos*sizeof(float));
     sort(w,w+nPos);
     int index = max(floor(nPos*(1-opt.minDR)),1);
     float threshold = w[index];
 
     for(iter = negPassIndex.begin(); iter != negPassIndex.end();){
-      if(negFx[*iter] < threshold)
+      if(neg.Fx[*iter] < threshold)
         iter = negPassIndex.erase(iter);
       else
         iter++;
     }
-    float far = float(negPassIndex.size())/float(nNegPass);
-    nNegPass = negPassIndex.size();
+    float far = float(negPassIndex.size())/float(nNeg);
+
   
     int depth = CalcTreeDepth(leftChild,rightChild);
 
     if(t==1)
       aveEval+=depth;
     else
-      aveEval+=depth*FAR;
-    FAR *=far;
+      aveEval+=depth*_FAR;
+    _FAR *=far;
     nFea = nFea + feaId.size();
 
 
-    gettimeofday(&end,NULL);
-    int time = (end.tv_sec - start.tv_sec);
+//    gettimeofday(&end,NULL);
+//    float time = (end.tv_sec - start.tv_sec)*1000+(end.tv_usec - start.tv_usec)/1000;
 
-    printf("Iter %d: nPos=%d, nNeg=%d, ", t, nPosSam, nNegSam);
-    printf("FAR(t)=%.2f%%, FAR=%.2g, depth=%d, nFea(t)=%d, nFea=%d, cost=%.3f.\n",far*100.,FAR,depth,feaId.size(),nFea,mincost);
-    printf("\t\tnNegPass=%d, aveEval=%.3f, time=%.0fs, meanT=%.3fs.\n", nNegPass, aveEval, time, time/(t-stages+1));
+    int nNegPass = negPassIndex.size();
+    printf("FAR(t)=%.2f%%, FAR=%.2g, depth=%d, nFea(t)=%d, nFea=%d, cost=%.3f.\n",far*100.,_FAR,depth,feaId.size(),nFea,mincost);
+//    printf("\t\tnNegPass=%d, aveEval=%.3f, alltime=%.3fms, Ttime = %.3fms, meanT=%.3fms.\n", nNegPass, aveEval, time, Ttime, time/(t-stages+1));
 
     
-    if(FAR<=opt.maxFAR){
-      printf("\n\nThe training is converged at iteration %d. FAR = %.2f%%\n", t, FAR * 100);
+    if(_FAR<=opt.maxFAR){
+      printf("\n\nThe training is converged at iteration %d. FAR = %.2f%%\n", t, _FAR * 100);
       break;
     }
 
@@ -208,13 +194,27 @@ vector<int> GAB::LearnGAB(Mat& faceFea, Mat& nonfaceFea){
     }
 
     SaveIter(feaId,leftChild,rightChild,cutpoint,fit,threshold,far,depth);
-    free(w);
 
-    CalcWeight(posW,posFx,1,opt.maxWeight,nPos);
-    CalcWeight(negW,negFx,-1,opt.maxWeight,negPassIndex);
+//    gettimeofday(&Tstart,NULL); 
 
+    printf("4\n");
+//    neg.Remove(negPassIndex);
+    printf("5befor\n");
+    MiningNeg(negPassIndex.size(),neg,neg.Fx);
+    printf("\n");
+    printf("5\n");
+    nonfaceFea = neg.Extract();
+    printf("6\n");
+    pos.CalcWeight(1,opt.maxWeight);
+    neg.CalcWeight(-1,opt.maxWeight);
+    printf("7\n");
+
+//    gettimeofday(&Tend,NULL);
+//    Ttime = (Tend.tv_sec - Tstart.tv_sec)*1000+(Tend.tv_usec - Tstart.tv_usec)/1000;
+//    printf("update weight time:%.3fms\n",Ttime);
   }
-  return negPassIndex;
+
+
 }
 
 void GAB::SaveIter(vector<int> feaId, vector<int> leftChild, vector<int> rightChild, vector< vector<unsigned char> > cutpoint, vector<float> fit, float threshold, float far, int depth){
@@ -282,20 +282,6 @@ void GAB::TestDQT(float posFx[], vector<float> fit, vector< vector<unsigned char
     posFx[i]+=score[i];
 }
 
-void GAB::TestDQT(float posFx[], vector<float> fit, vector< vector<unsigned char> > cutpoint, vector<int> leftChild, vector<int> rightChild, cv::Mat x, vector<int> negPassIndex){
-  int n = negPassIndex.size();
-  float *score = new float[n];
-  for (int i = 0;i<n;i++)
-    score[negPassIndex[i]]=0;
-
-  for( int i = 0; i<n;i++){
-    score[negPassIndex[i]] = TestSubTree(fit,cutpoint,x,-1,negPassIndex[i],leftChild,rightChild,0);
-  }
-
-  for(int i =0;i<n;i++)
-    posFx[negPassIndex[i]]+=score[negPassIndex[i]];
-}
-
 float GAB::TestSubTree(vector<float> fit, vector< vector<unsigned char> > cutpoint, cv::Mat x, int node, int index, vector<int> leftChild, vector<int> rightChild,bool init){
   int n = x.cols;
   float score = 0;
@@ -320,35 +306,7 @@ float GAB::TestSubTree(vector<float> fit, vector< vector<unsigned char> > cutpoi
   return score;
 }
 
-void GAB::CalcWeight(float F[], float Fx[], int y, int maxWeight, int nPos){
-  float s = 0;
-  for(int i = 0;i<nPos;i++){
-    F[i]=min(exp(-y*Fx[i]),maxWeight);
-    s += F[i];
-  }
-  if (s == 0)
-    for(int i = 0;i<nPos;i++)
-      F[i]=1/nPos;
-  else
-    for(int i = 0;i<nPos;i++)
-      F[i]/=s;
-}
-
-void GAB::CalcWeight(float F[], float Fx[], int y, int maxWeight, vector<int> negPassIndex){
-  float s = 0;
-  for(int i = 0;i<negPassIndex.size();i++){
-    F[negPassIndex[i]]=min(exp(-y*Fx[negPassIndex[i]]),maxWeight);
-    s += F[negPassIndex[i]];
-  }
-  if (s == 0)
-    for(int i = 0;i<negPassIndex.size();i++)
-      F[negPassIndex[i]]=1/negPassIndex.size();
-  else
-    for(int i = 0;i<negPassIndex.size();i++)
-      F[negPassIndex[i]]/=s;
-}
-
-bool GAB::NPDClassify(Mat test){
+float GAB::NPDClassify(Mat test){
   float Fx = 0;
   int x1,y1,x2,y2;
   for(int i = 0 ;i<stages;i++){
@@ -369,11 +327,12 @@ bool GAB::NPDClassify(Mat test){
     node = -node -1;
     Fx = Fx + fits[i][node];
 
-    if(Fx < thresholds[i])
-      return false;
+    if(Fx < thresholds[i]){
+      return -10000.0;
+    }
 
   }
-  return true;
+  return Fx;
 }
 
 void GAB::GetPoints(int feaid, int *x1, int *y1, int *x2, int *y2){
@@ -384,4 +343,41 @@ void GAB::GetPoints(int feaid, int *x1, int *y1, int *x2, int *y2){
   *x1 = lpoint/opt.objSize;
   *y2 = rpoint%opt.objSize;
   *x2 = rpoint/opt.objSize;
+}
+
+void GAB::MiningNeg(int st,DataSet& neg,float Fx[]){
+  const Options& opt = Options::GetInstance();
+  int pool_size = omp_get_max_threads();
+  vector<Mat> region_pool(pool_size);
+  int n = neg.size;
+  srand(time(0));
+
+  int all = 0;
+
+  int current_idx;
+  printf("start mining\n");
+
+  float score;
+
+  while(st<n){
+
+    current_idx = rand()%(neg.list.size());
+    neg.img = imread(neg.list[current_idx], CV_LOAD_IMAGE_GRAYSCALE);
+    #pragma omp parallel for
+    for(int i = 0;i<pool_size;i++){
+      region_pool[i] = neg.NextImage(i);
+    }
+    
+    for (int i = 0; i < pool_size; i++) {
+      score = NPDClassify(region_pool[i].clone());
+      if(score!=-10000.0){
+        neg.imgs.push_back(region_pool[i].clone());
+        neg.Fx[st]=score;
+        
+        st++;
+      }
+    }
+  }
+  
+  printf("mining done\n");
 }

@@ -4,7 +4,6 @@
 Options::Options(){ //default value
   objSize = 20;
   negRatio = 1.0;
-  finalNegs = 100;
   numFaces =  MAX;
   treeLevel = 8;
   maxNumWeaks = 1226;
