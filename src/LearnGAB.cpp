@@ -3,13 +3,14 @@
 #include <sys/time.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <map>
 
 #define max(a, b)  (((a) > (b)) ? (a) : (b))
 #define min(a, b)  (((a) < (b)) ? (a) : (b))
 
 using namespace cv;
 
-GAB::GAB(int size){
+GAB::GAB(){
   const Options& opt = Options::GetInstance();
   stages = 0;
 
@@ -43,6 +44,7 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
   const Options& opt = Options::GetInstance();
   timeval start, end;
   timeval Tstart, Tend;
+  float time = 0;
   int nPos = pos.size;
   int nNeg = neg.size;
 
@@ -117,10 +119,7 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
 
     printf("Iter %d: nPos=%d, nNeg=%d, ", t, nPosSam, nNegSam);
     DQT dqt;
-    gettimeofday(&Tstart,NULL);
     float mincost = dqt.Learn(faceFea,nonfaceFea,pos.W,neg.W,posIndex,negIndex,minLeaf_t,feaId,leftChild,rightChild,cutpoint,fit);
-    gettimeofday(&Tend,NULL);
-    float Ttime = (Tend.tv_sec - Tstart.tv_sec)*1000+(Tend.tv_usec - Tstart.tv_usec)/1000;
 
     if (feaId.empty()){
       printf("\n\nNo available features to satisfy the split. The AdaBoost learning terminates.\n");
@@ -169,11 +168,11 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
 
 
     gettimeofday(&end,NULL);
-    float time = (end.tv_sec - start.tv_sec)*1000+(end.tv_usec - start.tv_usec)/1000;
+    time += (end.tv_sec - start.tv_sec);
 
     int nNegPass = negPassIndex.size();
     printf("FAR(t)=%.2f%%, FAR=%.2g, depth=%d, nFea(t)=%d, nFea=%d, cost=%.3f.\n",far*100.,_FAR,depth,feaId.size(),nFea,mincost);
-    printf("\t\tnNegPass=%d, aveEval=%.3f, alltime=%.3fms, Ttime = %.3fms, meanT=%.3fms.\n", nNegPass, aveEval, time, Ttime, time/(t-stages+1));
+    printf("\t\tnNegPass=%d, aveEval=%.3f, time=%.3fs, meanT=%.3fs.\n", nNegPass, aveEval, time, time/(stages+1));
 
     
     if(_FAR<=opt.maxFAR){
@@ -194,29 +193,11 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
     neg.CalcWeight(-1,opt.maxWeight);
     
     gettimeofday(&Tend,NULL);
-    Ttime = (Tend.tv_sec - Tstart.tv_sec)*1000+(Tend.tv_usec - Tstart.tv_usec)/1000;
-    printf("update weight time:%.3fms\n",Ttime);
-/*
-    printf("posFx\n");
-    for(int i = 0;i<nPos;i++)
-      printf("%f ",pos.Fx[i]);
-    printf("\n");
+    float Ttime = (Tend.tv_sec - Tstart.tv_sec);
+    printf("neg mining time:%.3fs\n",Ttime);
 
-    printf("negFx\n");
-    for(int i = 0;i<nPos;i++)
-      printf("%f ",pos.Fx[i]);
-    printf("\n");
-
-    printf("posW\n");
-    for(int i = 0;i<nPos;i++)
-      printf("%f ",pos.W[i]);
-    printf("\n");
-
-    printf("negW\n");
-    for(int i = 0;i<nNeg;i++)
-      printf("%f ",neg.W[i]);
-    printf("\n");
-    */
+    if(!(stages%20))
+      Save();
   }
 
 
@@ -239,18 +220,51 @@ void GAB::SaveIter(vector<int> feaId, vector<int> leftChild, vector<int> rightCh
 void GAB::Save(){
   const Options& opt = Options::GetInstance();
   FILE* file;
-  file = fopen(opt.outFile.c_str(), "wb+");
+  file = fopen(opt.outFile.c_str(), "wb");
 
   fwrite(&opt.objSize,sizeof(int),1,file);
   fwrite(&stages,sizeof(int),1,file);
+  int size;
   for(int i = 0;i<stages;i++){
-    fwrite(&feaIds[i],sizeof(int),feaIds[i].size(),file);
-    fwrite(&cutpoints[i],2*sizeof(unsigned char),cutpoints[i].size(),file);
-    fwrite(&leftChilds[i],sizeof(int),leftChilds[i].size(),file);
-    fwrite(&rightChilds[i],sizeof(int),rightChilds[i].size(),file);
-    fwrite(&fits[i],sizeof(float),fits[i].size(),file);
-    fwrite(&depths[i],sizeof(int),1,file);
-    fwrite(&thresholds[i],sizeof(float),1,file);
+    size = feaIds[i].size();
+    int *feaId = new int[size];
+    for(int j = 0;j<size;j++)
+      feaId[j] = feaIds[i][j];
+    fwrite(&size,sizeof(int),1,file);
+    fwrite(feaId,sizeof(int),feaIds[i].size(),file);
+    size = cutpoints[i].size();
+    unsigned char* cutpoint = new unsigned char[2*size];
+    for(int j = 0;j<size;j++){
+      cutpoint[2*j] = cutpoints[i][j][0];
+      cutpoint[2*j+1] = cutpoints[i][j][1];
+    }
+    fwrite(&size,sizeof(int),1,file);
+    fwrite(cutpoint,sizeof(unsigned char),2*cutpoints[i].size(),file);
+    size = leftChilds[i].size();
+    fwrite(&size,sizeof(int),1,file);
+    int *leftChild = new int[size];
+    for(int j = 0;j<size;j++){
+      leftChild[j] = leftChilds[i][j];
+    }
+    fwrite(leftChild,sizeof(int),leftChilds[i].size(),file);
+    size = rightChilds[i].size();
+    int *rightChild = new int[size];
+    for(int j = 0;j<size;j++){
+      rightChild[j] = rightChilds[i][j];
+    }
+    fwrite(&size,sizeof(int),1,file);
+    fwrite(rightChild,sizeof(int),rightChilds[i].size(),file);
+    size = fits[i].size();
+    float *fit = new float[size];
+    for(int j = 0;j<size;j++){
+      fit[j] = fits[i][j];
+    }
+    fwrite(&size,sizeof(int),1,file);
+    fwrite(fit,sizeof(float),fits[i].size(),file);
+    int depth = depths[i];
+    fwrite(&depth,sizeof(int),1,file);
+    float threshold = thresholds[i];
+    fwrite(&threshold,sizeof(float),1,file);
   }
   fclose(file);
 }
@@ -280,6 +294,7 @@ void GAB::TestDQT(float posFx[], vector<float> fit, vector< vector<unsigned char
   for (int i = 0;i<n;i++)
     score[i]=0;
 
+  #pragma omp parallel for
   for( int i = 0; i<n;i++)
     score[i] = TestSubTree(fit,cutpoint,x,0,i,leftChild,rightChild);
 
@@ -365,14 +380,154 @@ void GAB::MiningNeg(int st,DataSet& neg){
     for(int i = 0;i<pool_size;i++){
       region_pool[i] = neg.NextImage(i);
     }
-    
+
+    #pragma omp parallel for
     for (int i = 0; i < pool_size; i++) {
       float score = 0;
       if(NPDClassify(region_pool[i].clone(),score)){
-        neg.imgs.push_back(region_pool[i].clone());
-        neg.Fx[st]=score;
-        st++;
+        #pragma omp critical 
+        {
+          neg.imgs.push_back(region_pool[i].clone());
+          neg.Fx[st]=score;
+          st++;
+        }
       }
     }
   }
+}
+
+void GAB::LoadModel(string path){
+  FILE* file;
+  file = fopen(path.c_str(), "rb");
+  int size;
+
+  fread(&DetectSize,sizeof(int),1,file);
+  fread(&stages,sizeof(int),1,file);
+  for(int j = 0;j<stages;j++){
+    vector<int> feaId, leftChild, rightChild;
+    vector< vector<unsigned char> > cutpoint;
+    vector<float> fit;
+    int depth;
+    float threshold;
+
+    fread(&size,sizeof(int),1,file);
+    int *_feaId = new int[size];
+    fread(_feaId,sizeof(int),size,file);
+    for(int i = 0;i<size;i++)
+      feaId.push_back(_feaId[i]);
+    fread(&size,sizeof(int),1,file);
+    unsigned char *_cutpoint = new unsigned char[size*2];
+    fread(_cutpoint,sizeof(unsigned char),2*size,file);
+    for(int i =0;i<size;i++){
+      vector<unsigned char> cut;
+      cut.push_back(_cutpoint[2*i]);
+      cut.push_back(_cutpoint[2*i+1]);
+      cutpoint.push_back(cut);
+    }
+    fread(&size,sizeof(int),1,file);
+    int *_leftChild = new int[size];
+    fread(_leftChild,sizeof(int),size,file);
+    for(int i =0;i<size;i++)
+      leftChild.push_back(_leftChild[i]);
+    fread(&size,sizeof(int),1,file);
+    int *_rightChild = new int[size];
+    fread(_rightChild,sizeof(int),size,file);
+    for(int i =0;i<size;i++){
+      rightChild.push_back(_rightChild[i]);
+    }
+    fread(&size,sizeof(int),1,file);
+    float *_fit = new float[size];
+    fread(_fit,sizeof(float),size,file);
+    for(int i =0;i<size;i++){
+      fit.push_back(_fit[i]);
+    }
+    fread(&depth,sizeof(int),1,file);
+    fread(&threshold,sizeof(float),1,file);
+
+    feaIds.push_back(feaId);
+    leftChilds.push_back(leftChild);
+    rightChilds.push_back(rightChild);
+    cutpoints.push_back(cutpoint);
+    fits.push_back(fit);
+    depths.push_back(depth);
+    thresholds.push_back(threshold);
+  }
+  fclose(file);
+}
+
+vector<int> GAB::DetectFace(Mat ori,vector<Rect>& rects,vector<float>& scores){
+  const Options& opt = Options::GetInstance();
+  
+  int width = ori.cols;
+  int height = ori.rows;
+  int winsize = opt.objSize;
+  int step = winsize * 0.1;
+  float scale = 1.;
+  float scalefactor = 0.8;
+  Mat img = ori.clone();
+  while(width>=20 && height>=20){
+    for(int i = 0;i<width-winsize;i+=step){
+      for(int j = 0;j<height-winsize;j+=step){
+        float score;
+        Rect roi(i, j, winsize, winsize);
+        Mat crop_img = img(roi);
+        if(NPDClassify(crop_img,score)){
+          Rect box(i/scale, j/scale, winsize/scale, winsize/scale);
+          rects.push_back(box);
+          scores.push_back(score);
+        }
+      }
+    }
+    scale *= scalefactor;
+    resize(ori,img,Size(height*scale,width*scale));
+    width = img.cols;
+    height = img.rows;
+  }
+  vector<int> picked;
+  picked = Nms(rects,scores,0.3);
+  printf("one img finish\n");
+  return picked;
+}
+
+
+vector<int> GAB::Nms(vector<Rect>& rects, vector<float>& scores, float overlap) {
+  const int n = rects.size();
+  vector<float> areas(n);
+
+  typedef std::multimap<float, int> ScoreMapper;
+  ScoreMapper map;
+  for (int i = 0; i < n; i++) {
+    map.insert(ScoreMapper::value_type(scores[i], i));
+    areas[i] = rects[i].width*rects[i].height;
+  }
+
+  int picked_n = 0;
+  vector<int> picked(n);
+  while (map.size() != 0) {
+    int last = map.rbegin()->second; // get the index of maximum score value
+    picked[picked_n] = last;
+    picked_n++;
+    for (ScoreMapper::iterator it = map.begin(); it != map.end();) {
+      int idx = it->second;
+      float x1 = max(rects[idx].x, rects[last].x);
+      float y1 = max(rects[idx].y, rects[last].y);
+      float x2 = min(rects[idx].x + rects[idx].width, rects[last].x + rects[last].width);
+      float y2 = min(rects[idx].y + rects[idx].height, rects[last].y + rects[last].height);
+      float w = max(0., x2 - x1);
+      float h = max(0., y2 - y1);
+      float ov = w*h / (areas[idx] + areas[last] - w*h);
+      if (ov > overlap) {
+        ScoreMapper::iterator tmp = it;
+        tmp++;
+        map.erase(it);
+        it = tmp;
+      }
+      else{
+        it++;
+      }
+    }
+  }
+
+  picked.resize(picked_n);
+  return picked;
 }

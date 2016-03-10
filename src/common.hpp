@@ -17,6 +17,7 @@ class Options{
     string faceDBFile;
     string nonfaceDBFile;
     string outFile;
+    string fddb_dir;
     int treeLevel;
     int maxNumWeaks;
     double minDR;

@@ -6,13 +6,14 @@ Options::Options(){ //default value
   negRatio = 1.0;
   numFaces =  MAX;
   treeLevel = 8;
-  maxNumWeaks = 1500;
+  maxNumWeaks = 100;
   minDR = 1.0;
   maxFAR = 1e-16;
   minSamples = 100;
   faceDBFile = "../data/FaceDB.txt";
   nonfaceDBFile = "../data/NonfaceDB.txt";
   outFile = "../result";
+  fddb_dir = "../data/fddb";
   minNegRatio = 0.2;
   trimFrac = 0.05;
   samFrac = 1.0;

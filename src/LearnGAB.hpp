@@ -8,7 +8,7 @@
 
 class GAB{
   public:
-    GAB(int);
+    GAB();
     void LearnGAB(DataSet& pos, DataSet& neg);
     void SaveIter(vector<int>, vector<int>, vector<int>, vector< vector<unsigned char> >, vector<float>, float, float, int);
     void Save();
@@ -21,6 +21,7 @@ class GAB{
     bool NPDClassify(cv::Mat test,float &score);
     void GetPoints(int feaid, int *x1, int *y1, int *x2, int *y2);
     void MiningNeg(const int n,DataSet& neg);
+    void LoadModel(string path);
   public:
     int stages;
     vector< vector<int> > feaIds, leftChilds, rightChilds;
@@ -33,5 +34,9 @@ class GAB{
     vector<int> rpoints;
     cv::Mat ppNpdTable;
 
+  public:
+    int DetectSize;
+    vector<int> DetectFace(cv::Mat,vector<cv::Rect>& ,vector<float>& );
+    vector<int> Nms(vector<cv::Rect>& rects, vector<float>& scores, float overlap);
 };
 #endif

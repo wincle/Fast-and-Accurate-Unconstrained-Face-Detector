@@ -5,4 +5,5 @@
 class TrainDetector{
   public:
     void Train();
+    void FddbDetect();
 };

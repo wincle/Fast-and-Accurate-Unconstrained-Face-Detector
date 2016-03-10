@@ -116,7 +116,7 @@ Mat DataSet::NextImage(int i) {
   const int height = img.rows;
   int x=0,y=0,s=0;
 
-  s = w+rand()%(min(width,height)-w);
+  s = w+(int)((rand()%(min(width,height)-w))*((float)i/(float)omp_get_max_threads()));
   x = rand()%(width-s);
   y = rand()%(height-s);
 
@@ -201,9 +201,6 @@ void DataSet::CalcWeight(int y, int maxWeight){
   float s = 0;
   for(int i = 0;i<size;i++){
     W[i]=min(exp(-y*Fx[i]),float(maxWeight));
-    if(W[i]==float(maxWeight)){
-      printf("out range\n");
-    }
     s += W[i];
   }
   if (s == 0)
