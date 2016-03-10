@@ -15,7 +15,7 @@ class GAB{
     int CalcTreeDepth(vector<int> leftChild, vector<int> rightChild, int node = 0);
     void TestDQT(float[], vector<float>, vector< vector<unsigned char> > , vector<int>, vector<int>, cv::Mat);
     void TestDQT(float[], vector<float>, vector< vector<unsigned char> > , vector<int>, vector<int>, cv::Mat, vector<int> );
-    float TestSubTree(vector<float> ,vector< vector<unsigned char> > ,cv::Mat ,int ,int ,vector<int> leftChild, vector<int> rightChild,bool init);
+    float TestSubTree(vector<float> ,vector< vector<unsigned char> > ,cv::Mat ,int ,int ,vector<int> leftChild, vector<int> rightChild);
     void CalcWeight(float F[], float Fx[], int y, int maxWeight, int);
     void CalcWeight(float F[], float Fx[], int y, int maxWeight, vector<int> negPassIndex);
     float NPDClassify(cv::Mat test);

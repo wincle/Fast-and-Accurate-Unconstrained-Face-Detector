@@ -59,6 +59,9 @@ void DataSet::LoadPositiveDataSet(const string& positive){
     Mat face = origin(bboxes[i]);
     Mat img;
     cv::resize(face, img, Size(opt.objSize, opt.objSize));
+    char dir[256];
+    sprintf(dir,"hd/%d.jpg",i);
+    cv::imwrite(dir,img);
     imgs[i] = img;
   }
   random_shuffle(imgs.begin(),imgs.end());
@@ -137,7 +140,7 @@ void DataSet::Remove(vector<int> PassIndex){
   int passNum = PassIndex.size();
 
   vector<Mat> tmpImgs;
-  float* tmpFx = new float[size];
+  float* tmpFx = new float[size+omp_get_max_threads()];
 
   for(int i = 0;i<passNum;i++){
     tmpImgs.push_back(imgs[PassIndex[i]]);
@@ -162,7 +165,7 @@ Mat DataSet::Extract(){
   Mat fea = Mat(feaDims,numImgs,CV_8UC1);
 
 
-//  #pragma omp parallel for
+  #pragma omp parallel for
   for(int k = 0; k < numImgs; k++)
   {
     int x1,y1,x2,y2,d;
@@ -185,7 +188,7 @@ Mat DataSet::Extract(){
 }
 
 void DataSet::initWeights(){
-  W = new float[size+omp_get_max_threads()];
+  W = new float[size];
   for(int i = 0;i<size;i++)
     W[i]=1./size;
   Fx = new float[size+omp_get_max_threads()];

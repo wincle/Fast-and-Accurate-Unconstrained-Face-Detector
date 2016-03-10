@@ -41,8 +41,8 @@ GAB::GAB(int size){
 
 void GAB::LearnGAB(DataSet& pos, DataSet& neg){
   const Options& opt = Options::GetInstance();
-//  timeval start, end;
-//  timeval Tstart, Tend;
+  timeval start, end;
+  timeval Tstart, Tend;
   int nPos = pos.size;
   int nNeg = neg.size;
 
@@ -61,7 +61,7 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
   for (int t = stages;t<opt.maxNumWeaks;t++){
     printf("0\n");
     printf("start training %d stages \n",t);
-//    gettimeofday(&start,NULL);
+    gettimeofday(&start,NULL);
 
 
     vector<int> posIndex;
@@ -122,10 +122,10 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
 
     printf("Iter %d: nPos=%d, nNeg=%d, ", t, nPosSam, nNegSam);
     DQT dqt;
-//    gettimeofday(&Tstart,NULL);
+    gettimeofday(&Tstart,NULL);
     float mincost = dqt.Learn(faceFea,nonfaceFea,pos.W,neg.W,posIndex,negIndex,minLeaf_t,feaId,leftChild,rightChild,cutpoint,fit);
-//    gettimeofday(&Tend,NULL);
-//    float Ttime = (Tend.tv_sec - Tstart.tv_sec)*1000+(Tend.tv_usec - Tstart.tv_usec)/1000;
+    gettimeofday(&Tend,NULL);
+    float Ttime = (Tend.tv_sec - Tstart.tv_sec)*1000+(Tend.tv_usec - Tstart.tv_usec)/1000;
 
     printf("3\n");
 
@@ -143,9 +143,11 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
       for(int j = 0;j<nonfaceFea.cols;j++)
         negX.at<uchar>(i,j) = nonfaceFea.at<uchar>(feaId[i],j);
 
+    printf("test DQT\n");
     TestDQT(pos.Fx,fit,cutpoint,leftChild,rightChild,posX);
     TestDQT(neg.Fx,fit,cutpoint,leftChild,rightChild,negX);
     
+    printf("test pass\n");
 
     vector<int> negPassIndex;
     for(int i=0; i<nNegSam; i++)
@@ -175,12 +177,12 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
     nFea = nFea + feaId.size();
 
 
-//    gettimeofday(&end,NULL);
-//    float time = (end.tv_sec - start.tv_sec)*1000+(end.tv_usec - start.tv_usec)/1000;
+    gettimeofday(&end,NULL);
+    float time = (end.tv_sec - start.tv_sec)*1000+(end.tv_usec - start.tv_usec)/1000;
 
     int nNegPass = negPassIndex.size();
     printf("FAR(t)=%.2f%%, FAR=%.2g, depth=%d, nFea(t)=%d, nFea=%d, cost=%.3f.\n",far*100.,_FAR,depth,feaId.size(),nFea,mincost);
-//    printf("\t\tnNegPass=%d, aveEval=%.3f, alltime=%.3fms, Ttime = %.3fms, meanT=%.3fms.\n", nNegPass, aveEval, time, Ttime, time/(t-stages+1));
+    printf("\t\tnNegPass=%d, aveEval=%.3f, alltime=%.3fms, Ttime = %.3fms, meanT=%.3fms.\n", nNegPass, aveEval, time, Ttime, time/(t-stages+1));
 
     
     if(_FAR<=opt.maxFAR){
@@ -188,19 +190,16 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
       break;
     }
 
-    if (nNegPass < nNeg * opt.minNegRatio || nNegPass < opt.minSamples){
-      printf("\n\nNo enough negative samples. The AdaBoost learning terminates at iteration %d. nNegPass = %d.\n", t, nNegPass);
-      break;
-    }
 
     SaveIter(feaId,leftChild,rightChild,cutpoint,fit,threshold,far,depth);
 
-//    gettimeofday(&Tstart,NULL); 
+    gettimeofday(&Tstart,NULL); 
 
     printf("4\n");
-//    neg.Remove(negPassIndex);
+    neg.Remove(negPassIndex);
     printf("5befor\n");
     MiningNeg(negPassIndex.size(),neg,neg.Fx);
+
     printf("\n");
     printf("5\n");
     nonfaceFea = neg.Extract();
@@ -209,9 +208,9 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
     neg.CalcWeight(-1,opt.maxWeight);
     printf("7\n");
 
-//    gettimeofday(&Tend,NULL);
-//    Ttime = (Tend.tv_sec - Tstart.tv_sec)*1000+(Tend.tv_usec - Tstart.tv_usec)/1000;
-//    printf("update weight time:%.3fms\n",Ttime);
+    gettimeofday(&Tend,NULL);
+    Ttime = (Tend.tv_sec - Tstart.tv_sec)*1000+(Tend.tv_usec - Tstart.tv_usec)/1000;
+    printf("update weight time:%.3fms\n",Ttime);
   }
 
 
@@ -276,22 +275,21 @@ void GAB::TestDQT(float posFx[], vector<float> fit, vector< vector<unsigned char
     score[i]=0;
 
   for( int i = 0; i<n;i++)
-    score[i] = TestSubTree(fit,cutpoint,x,-1,i,leftChild,rightChild,0);
+    score[i] = TestSubTree(fit,cutpoint,x,0,i,leftChild,rightChild);
 
   for(int i =0;i<n;i++)
     posFx[i]+=score[i];
 }
 
-float GAB::TestSubTree(vector<float> fit, vector< vector<unsigned char> > cutpoint, cv::Mat x, int node, int index, vector<int> leftChild, vector<int> rightChild,bool init){
+float GAB::TestSubTree(vector<float> fit, vector< vector<unsigned char> > cutpoint, cv::Mat x, int node, int index, vector<int> leftChild, vector<int> rightChild){
   int n = x.cols;
   float score = 0;
 
-  if (init && node<0){
+  if (node<0){
     score=fit[-node-1];
   }
 
   else{
-    node++;
     bool isLeft;
     if(x.at<uchar>(node,index)<cutpoint[node][0] || x.at<uchar>(node,index)>cutpoint[node][1])
       isLeft = 1;
@@ -299,9 +297,9 @@ float GAB::TestSubTree(vector<float> fit, vector< vector<unsigned char> > cutpoi
       isLeft = 0;
 
     if(isLeft)
-      score = TestSubTree(fit,cutpoint,x,leftChild[node],index,leftChild,rightChild,1);
+      score = TestSubTree(fit,cutpoint,x,leftChild[node],index,leftChild,rightChild);
     else
-      score = TestSubTree(fit,cutpoint,x,rightChild[node],index,leftChild,rightChild,1);
+      score = TestSubTree(fit,cutpoint,x,rightChild[node],index,leftChild,rightChild);
   }
   return score;
 }
