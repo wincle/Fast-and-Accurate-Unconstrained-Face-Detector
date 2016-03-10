@@ -56,10 +56,8 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
   int nFea=0;
   float aveEval=0;
 
-
   float *w = new float[nPos];
   for (int t = stages;t<opt.maxNumWeaks;t++){
-    printf("0\n");
     printf("start training %d stages \n",t);
     gettimeofday(&start,NULL);
 
@@ -70,8 +68,6 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
       posIndex.push_back(i);
     for(int i=0; i<nNeg; i++)
       negIndex.push_back(i);
-
-    printf("1\n");
 
     //trim weight
     memcpy(w,pos.W,nPos*sizeof(float));
@@ -118,7 +114,6 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
     vector<int> feaId, leftChild, rightChild;
     vector< vector<unsigned char> > cutpoint;
     vector<float> fit;
-    printf("2\n");
 
     printf("Iter %d: nPos=%d, nNeg=%d, ", t, nPosSam, nNegSam);
     DQT dqt;
@@ -126,8 +121,6 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
     float mincost = dqt.Learn(faceFea,nonfaceFea,pos.W,neg.W,posIndex,negIndex,minLeaf_t,feaId,leftChild,rightChild,cutpoint,fit);
     gettimeofday(&Tend,NULL);
     float Ttime = (Tend.tv_sec - Tstart.tv_sec)*1000+(Tend.tv_usec - Tstart.tv_usec)/1000;
-
-    printf("3\n");
 
     if (feaId.empty()){
       printf("\n\nNo available features to satisfy the split. The AdaBoost learning terminates.\n");
@@ -143,11 +136,9 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
       for(int j = 0;j<nonfaceFea.cols;j++)
         negX.at<uchar>(i,j) = nonfaceFea.at<uchar>(feaId[i],j);
 
-    printf("test DQT\n");
     TestDQT(pos.Fx,fit,cutpoint,leftChild,rightChild,posX);
     TestDQT(neg.Fx,fit,cutpoint,leftChild,rightChild,negX);
     
-    printf("test pass\n");
 
     vector<int> negPassIndex;
     for(int i=0; i<nNegSam; i++)
@@ -195,22 +186,36 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
 
     gettimeofday(&Tstart,NULL); 
 
-    printf("4\n");
     neg.Remove(negPassIndex);
-    printf("5befor\n");
-    MiningNeg(negPassIndex.size(),neg,neg.Fx);
+    MiningNeg(negPassIndex.size(),neg);
 
-    printf("\n");
-    printf("5\n");
     nonfaceFea = neg.Extract();
-    printf("6\n");
     pos.CalcWeight(1,opt.maxWeight);
     neg.CalcWeight(-1,opt.maxWeight);
-    printf("7\n");
-
+    
     gettimeofday(&Tend,NULL);
     Ttime = (Tend.tv_sec - Tstart.tv_sec)*1000+(Tend.tv_usec - Tstart.tv_usec)/1000;
     printf("update weight time:%.3fms\n",Ttime);
+
+    printf("posFx\n");
+    for(int i = 0;i<nPos;i++)
+      printf("%f ",pos.Fx[i]);
+    printf("\n");
+
+    printf("negFx\n");
+    for(int i = 0;i<nPos;i++)
+      printf("%f ",pos.Fx[i]);
+    printf("\n");
+
+    printf("posW\n");
+    for(int i = 0;i<nPos;i++)
+      printf("%f ",pos.W[i]);
+    printf("\n");
+
+    printf("negW\n");
+    for(int i = 0;i<nNeg;i++)
+      printf("%f ",neg.W[i]);
+    printf("\n");
   }
 
 
@@ -304,7 +309,7 @@ float GAB::TestSubTree(vector<float> fit, vector< vector<unsigned char> > cutpoi
   return score;
 }
 
-float GAB::NPDClassify(Mat test){
+bool GAB::NPDClassify(Mat test,float &score){
   float Fx = 0;
   int x1,y1,x2,y2;
   for(int i = 0 ;i<stages;i++){
@@ -326,11 +331,12 @@ float GAB::NPDClassify(Mat test){
     Fx = Fx + fits[i][node];
 
     if(Fx < thresholds[i]){
-      return -10000.0;
+      return 0;
     }
 
   }
-  return Fx;
+  score = Fx;
+  return 1;
 }
 
 void GAB::GetPoints(int feaid, int *x1, int *y1, int *x2, int *y2){
@@ -343,23 +349,16 @@ void GAB::GetPoints(int feaid, int *x1, int *y1, int *x2, int *y2){
   *x2 = rpoint/opt.objSize;
 }
 
-void GAB::MiningNeg(int st,DataSet& neg,float Fx[]){
+void GAB::MiningNeg(int st,DataSet& neg){
   const Options& opt = Options::GetInstance();
   int pool_size = omp_get_max_threads();
   vector<Mat> region_pool(pool_size);
   int n = neg.size;
   srand(time(0));
 
-  int all = 0;
-
-  int current_idx;
-  printf("start mining\n");
-
-  float score;
-
   while(st<n){
 
-    current_idx = rand()%(neg.list.size());
+    int current_idx = rand()%(neg.list.size());
     neg.img = imread(neg.list[current_idx], CV_LOAD_IMAGE_GRAYSCALE);
     #pragma omp parallel for
     for(int i = 0;i<pool_size;i++){
@@ -367,15 +366,12 @@ void GAB::MiningNeg(int st,DataSet& neg,float Fx[]){
     }
     
     for (int i = 0; i < pool_size; i++) {
-      score = NPDClassify(region_pool[i].clone());
-      if(score!=-10000.0){
+      float score = 0;
+      if(NPDClassify(region_pool[i].clone(),score)){
         neg.imgs.push_back(region_pool[i].clone());
         neg.Fx[st]=score;
-        
         st++;
       }
     }
   }
-  
-  printf("mining done\n");
 }

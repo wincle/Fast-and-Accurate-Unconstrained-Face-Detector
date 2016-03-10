@@ -18,9 +18,9 @@ class GAB{
     float TestSubTree(vector<float> ,vector< vector<unsigned char> > ,cv::Mat ,int ,int ,vector<int> leftChild, vector<int> rightChild);
     void CalcWeight(float F[], float Fx[], int y, int maxWeight, int);
     void CalcWeight(float F[], float Fx[], int y, int maxWeight, vector<int> negPassIndex);
-    float NPDClassify(cv::Mat test);
+    bool NPDClassify(cv::Mat test,float &score);
     void GetPoints(int feaid, int *x1, int *y1, int *x2, int *y2);
-    void MiningNeg(const int n,DataSet& neg,float[]);
+    void MiningNeg(const int n,DataSet& neg);
   public:
     int stages;
     vector< vector<int> > feaIds, leftChilds, rightChilds;

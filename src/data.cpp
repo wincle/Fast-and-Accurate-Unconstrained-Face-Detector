@@ -103,7 +103,6 @@ void DataSet::MoreNeg(const int n){
       num ++;
     }
   }
-  printf("mining success rate %f\n",float(num)/float(all));
 }
 
 Mat DataSet::NextImage(int i) {
@@ -141,6 +140,8 @@ void DataSet::Remove(vector<int> PassIndex){
 
   vector<Mat> tmpImgs;
   float* tmpFx = new float[size+omp_get_max_threads()];
+  for(int i = 0;i<size+omp_get_max_threads();i++)
+    tmpFx[i] = 0;
 
   for(int i = 0;i<passNum;i++){
     tmpImgs.push_back(imgs[PassIndex[i]]);
@@ -195,17 +196,14 @@ void DataSet::initWeights(){
   for(int i = 0;i<size;i++)
     Fx[i]=0;
 }
-void DataSet::Clear(){
-  delete []W;
-  delete []Fx;
-}
 
 void DataSet::CalcWeight(int y, int maxWeight){
   float s = 0;
   for(int i = 0;i<size;i++){
     W[i]=min(exp(-y*Fx[i]),float(maxWeight));
-    if(W[i]==maxWeight)
-      printf("weight guojie\n");
+    if(W[i]==float(maxWeight)){
+      printf("out range\n");
+    }
     s += W[i];
   }
   if (s == 0)

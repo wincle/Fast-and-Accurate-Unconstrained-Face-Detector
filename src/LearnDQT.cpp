@@ -38,7 +38,6 @@ float DQT::LearnDQT(vector<unsigned char *> &posX, vector<unsigned char *> &negX
   unsigned char _cutpoint[2];
   float _fit[2];
 
-  printf("start DQT\n");
   float minCost = LearnQuadStump(posX, negX, posW, negW, posIndex, negIndex, nPos, nNeg, minLeaf, numThreads, parentFit,  _feaId, _cutpoint, _fit);
 
   if(_feaId < 0) return minCost;

@@ -16,7 +16,6 @@ class DataSet {
     void ImgClear();
     void initWeights();
     cv::Mat Extract();
-    void Clear();
     void CalcWeight(int y, int maxWeight);
   public:
     cv::Mat ppNpdTable;
