@@ -16,20 +16,29 @@ I haven't train a model out with large size data.
 
 In data folder, you should creat two file named FaceDB.txt and NonFaceDB.txt.
 
+```
 FaceDB.txt
 ../data/face/00001.jpg x1 y1 x2 y2
 ../data/face/00002.jpg x1 y1 x2 y2
 ....
 ....
+```
 
+```
 NonfaceDB.txt
 ../data/bg/000001.jpg
 ../data/bg/000002.jpg
 ../data/bg/000003.jpg
 ....
 ....
+```
 
 The config is in src/common.cpp 
+
+
+#License
+
+BSD 3-Clause
 
 # References
 
