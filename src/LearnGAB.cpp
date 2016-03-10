@@ -196,7 +196,7 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
     gettimeofday(&Tend,NULL);
     Ttime = (Tend.tv_sec - Tstart.tv_sec)*1000+(Tend.tv_usec - Tstart.tv_usec)/1000;
     printf("update weight time:%.3fms\n",Ttime);
-
+/*
     printf("posFx\n");
     for(int i = 0;i<nPos;i++)
       printf("%f ",pos.Fx[i]);
@@ -216,6 +216,7 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
     for(int i = 0;i<nNeg;i++)
       printf("%f ",neg.W[i]);
     printf("\n");
+    */
   }
 
 
