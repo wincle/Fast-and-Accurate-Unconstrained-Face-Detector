@@ -25,7 +25,7 @@ void TrainDetector::FddbDetect(){
   const char* fddb_dir=opt.fddb_dir.c_str();
   string prefix = opt.fddb_dir + string("/");
 
-//  #pragma omp parallel for
+  #pragma omp parallel for
   for(int i = 1;i<=10;i++){
     char fddb[300];
     char fddb_out[300];

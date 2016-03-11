@@ -5,4 +5,4 @@ Train: common.cpp common.hpp TrainDetector_Demo.cpp TrainDetector.cpp TrainDetec
 	$(CC) common.cpp data.cpp TrainDetector_Demo.cpp TrainDetector.cpp LearnGAB.cpp LearnDQT.cpp $(OPENCV) -fopenmp -o Train -O3
 
 Detect: common.cpp common.hpp Detect_Demo.cpp TrainDetector.cpp TrainDetector.hpp data.hpp data.cpp LearnGAB.cpp LearnGAB.hpp LearnDQT.cpp LearnDQT.hpp
-	$(CC) common.cpp data.cpp Detect_Demo.cpp TrainDetector.cpp LearnGAB.cpp LearnDQT.cpp $(OPENCV) -fopenmp -o Detect -g
+	$(CC) common.cpp data.cpp Detect_Demo.cpp TrainDetector.cpp LearnGAB.cpp LearnDQT.cpp $(OPENCV) -fopenmp -o Detect -O3

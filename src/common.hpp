@@ -1,6 +1,7 @@
 #ifndef COMMON_HPP_
 #define COMMON_HPP_
 #include <string>
+#include <stdio.h>
 using namespace std;
 
 
