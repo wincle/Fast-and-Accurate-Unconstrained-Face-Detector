@@ -15,6 +15,8 @@ void TrainDetector::Train(){
   GAB Gab;
   Gab.LearnGAB(pos,neg);
   Gab.Save();
+  pos.Clear();
+  neg.Clear();
 }
 
 void TrainDetector::FddbDetect(){

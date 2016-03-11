@@ -150,6 +150,7 @@ void DataSet::Remove(vector<int> PassIndex){
 
   Fx = tmpFx;
   imgs = tmpImgs;
+  delete []tmpFx;
 }
 
 Mat DataSet::Extract(){
@@ -209,4 +210,9 @@ void DataSet::CalcWeight(int y, int maxWeight){
   else
     for(int i = 0;i<size;i++)
       W[i]/=s;
+}
+
+void DataSet::Clear(){
+  delete []W;
+  delete []Fx;
 }

@@ -198,6 +198,8 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
 
     if(!(stages%20))
       Save();
+
+    delete []w;
   }
 
 
@@ -265,6 +267,12 @@ void GAB::Save(){
     fwrite(&depth,sizeof(int),1,file);
     float threshold = thresholds[i];
     fwrite(&threshold,sizeof(float),1,file);
+
+    delete []feaId;
+    delete []cutpoint;
+    delete []leftChild;
+    delete []rightChild;
+    delete []fit;
   }
   fclose(file);
 }
@@ -300,6 +308,8 @@ void GAB::TestDQT(float posFx[], vector<float> fit, vector< vector<unsigned char
 
   for(int i =0;i<n;i++)
     posFx[i]+=score[i];
+
+  delete []score;
 }
 
 float GAB::TestSubTree(vector<float> fit, vector< vector<unsigned char> > cutpoint, cv::Mat x, int node, int index, vector<int> leftChild, vector<int> rightChild){
@@ -451,6 +461,12 @@ void GAB::LoadModel(string path){
     fits.push_back(fit);
     depths.push_back(depth);
     thresholds.push_back(threshold);
+
+    delete []_feaId;
+    delete []_cutpoint;
+    delete []_leftChild;
+    delete []_rightChild;
+    delete []_fit;
   }
   fclose(file);
 }
@@ -485,7 +501,6 @@ vector<int> GAB::DetectFace(Mat ori,vector<Rect>& rects,vector<float>& scores){
   }
   vector<int> picked;
   picked = Nms(rects,scores,0.3);
-  printf("one img finish\n");
   return picked;
 }
 
@@ -531,3 +546,4 @@ vector<int> GAB::Nms(vector<Rect>& rects, vector<float>& scores, float overlap) 
   picked.resize(picked_n);
   return picked;
 }
+
