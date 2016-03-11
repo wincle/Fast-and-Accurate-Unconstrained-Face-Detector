@@ -196,12 +196,12 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
     float Ttime = (Tend.tv_sec - Tstart.tv_sec);
     printf("neg mining time:%.3fs\n",Ttime);
 
-    if(!(stages%20))
+    if(!(stages%20)){
       Save();
+    }
 
-    delete []w;
   }
-
+  delete []w;
 
 }
 
@@ -471,33 +471,34 @@ void GAB::LoadModel(string path){
   fclose(file);
 }
 
-vector<int> GAB::DetectFace(Mat ori,vector<Rect>& rects,vector<float>& scores){
+vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
   const Options& opt = Options::GetInstance();
-  
-  int width = ori.cols;
-  int height = ori.rows;
-  int winsize = opt.objSize;
-  int step = winsize * 0.1;
-  float scale = 1.;
-  float scalefactor = 0.8;
-  Mat img = ori.clone();
-  while(width>=20 && height>=20){
-    for(int i = 0;i<width-winsize;i+=step){
-      for(int j = 0;j<height-winsize;j+=step){
+  int width = img.cols;
+  int height = img.rows;
+  int win = opt.objSize;
+  float factor = 1.2;
+  int x = 0;
+  int y = 0;
+  Mat crop_img;
+  while(win <= width && win <= height){
+    int step = win * 0.1;
+    while (y<=(height-win)){
+      while (x<=(width-win)) {
         float score;
-        Rect roi(i, j, winsize, winsize);
-        Mat crop_img = img(roi);
+        Rect roi(x, y, win, win);
+        cv::resize(img(roi), crop_img, Size(opt.objSize, opt.objSize));
         if(NPDClassify(crop_img,score)){
-          Rect box(i/scale, j/scale, winsize/scale, winsize/scale);
-          rects.push_back(box);
+          rects.push_back(roi);
           scores.push_back(score);
         }
+        x += step;
       }
+      x = 0;
+      y += step;
     }
-    scale *= scalefactor;
-    resize(ori,img,Size(height*scale,width*scale));
-    width = img.cols;
-    height = img.rows;
+    x = 0;
+    y = 0;
+    win = win*factor;
   }
   vector<int> picked;
   picked = Nms(rects,scores,0.3);
