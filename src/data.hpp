@@ -10,7 +10,7 @@ class DataSet {
     static void LoadDataSet(DataSet& pos, DataSet& neg);
     void LoadPositiveDataSet(const std::string& positive);
     void LoadNegativeDataSet(const std::string& negative,const int pos_num);
-    cv::Mat NextImage(int);
+    cv::Mat NextImage(int );
     void MoreNeg(int );
     void Remove(vector<int>);
     void ImgClear();
@@ -29,7 +29,9 @@ class DataSet {
 
     //neg only
     std::vector<std::string> list;
-    cv::Mat img;
+    std::vector<cv::Mat> NegImgs;
+    int current_id;
+    int x,y;
 
 
 };

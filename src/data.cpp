@@ -21,6 +21,9 @@ DataSet::DataSet(){
       ppNpdTable.at<uchar>(i,j) = (unsigned char) fea;
     }
   }
+  x = 0;
+  y = 0;
+  current_id = 0;
 
 }
 
@@ -86,14 +89,16 @@ void DataSet::MoreNeg(const int n){
   const Options& opt = Options::GetInstance();
   int pool_size = omp_get_max_threads();
   vector<Mat> region_pool(pool_size);
+  for(int k = 0; k<omp_get_max_threads() ; k++){
+    Mat img = imread(list[k],CV_LOAD_IMAGE_GRAYSCALE);
+    NegImgs.push_back(img.clone());
+  }
   int num = 0;
   srand(time(0));
 
   int all = 0;
 
   while(num<n){
-    int current_idx = rand()%(list.size());
-    img = imread(list[current_idx], CV_LOAD_IMAGE_GRAYSCALE);
     #pragma omp parallel for
     for(int i = 0;i<pool_size;i++){
       region_pool[i] = NextImage(i);
@@ -108,15 +113,14 @@ void DataSet::MoreNeg(const int n){
 Mat DataSet::NextImage(int i) {
   const Options& opt = Options::GetInstance();
   const int w = opt.objSize;
-  const int h = opt.objSize;
 
-  srand(time(0)*(i+1));
+  Mat img = NegImgs[i];
 
   const int width = img.cols;
   const int height = img.rows;
   int x=0,y=0,s=0;
 
-  s = w+(int)((rand()%(min(width,height)-w))*((float)i/(float)omp_get_max_threads()));
+  s = w+(int)(rand()%(min(width,height)-w));
   x = rand()%(width-s);
   y = rand()%(height-s);
 
@@ -124,7 +128,7 @@ Mat DataSet::NextImage(int i) {
 
   Mat crop_img = img(roi);
   Mat region;
-  resize(crop_img,region,Size(w,h));
+  resize(crop_img,region,Size(w,w));
 
   return region;
 }

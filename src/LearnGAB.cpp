@@ -119,7 +119,11 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
 
     printf("Iter %d: nPos=%d, nNeg=%d, ", t, nPosSam, nNegSam);
     DQT dqt;
+    gettimeofday(&Tstart,NULL);
     float mincost = dqt.Learn(faceFea,nonfaceFea,pos.W,neg.W,posIndex,negIndex,minLeaf_t,feaId,leftChild,rightChild,cutpoint,fit);
+    gettimeofday(&Tend,NULL);
+    float DQTtime = (Tend.tv_sec - Tstart.tv_sec);
+    printf("DQT time:%.3fs\n",DQTtime);
 
     if (feaId.empty()){
       printf("\n\nNo available features to satisfy the split. The AdaBoost learning terminates.\n");
@@ -187,6 +191,8 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
 
     neg.Remove(negPassIndex);
     MiningNeg(negPassIndex.size(),neg);
+    if(neg.imgs.size()<pos.imgs.size())
+      break;
 
     nonfaceFea = neg.Extract();
     pos.CalcWeight(1,opt.maxWeight);
@@ -380,12 +386,12 @@ void GAB::MiningNeg(int st,DataSet& neg){
   int pool_size = omp_get_max_threads();
   vector<Mat> region_pool(pool_size);
   int n = neg.size;
-  srand(time(0));
+  int all = 0;
+  int iter_all = 0;
+  int need = n - st;
+  double rate;
 
   while(st<n){
-
-    int current_idx = rand()%(neg.list.size());
-    neg.img = imread(neg.list[current_idx], CV_LOAD_IMAGE_GRAYSCALE);
     #pragma omp parallel for
     for(int i = 0;i<pool_size;i++){
       region_pool[i] = neg.NextImage(i);
@@ -402,8 +408,25 @@ void GAB::MiningNeg(int st,DataSet& neg){
           st++;
         }
       }
+      iter_all++;
+      all++;
+    }
+    rate = ((double)(need))/(double)iter_all;
+    if(rate < 0.001){
+      need = n - st;
+      iter_all = 0;
+      neg.current_id += pool_size;
+      if (neg.current_id>neg.list.size()){
+        printf("ran out of NegImgs!!!\n");
+        break;
+      }
+      for(int k =0 ;k< pool_size;k++){
+        Mat img = imread(neg.list[k+neg.current_id],CV_LOAD_IMAGE_GRAYSCALE);
+        neg.NegImgs[k] = img.clone();
+      }
     }
   }
+  printf("mining success rate %lf\n",rate);
 }
 
 void GAB::LoadModel(string path){
