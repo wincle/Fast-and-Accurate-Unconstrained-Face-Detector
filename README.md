@@ -12,7 +12,7 @@ I haven't train a model out with large size data.
 - Can't retrain.
 
 # How to use
-- mkdir data
+- you should mkdir data first
 
 In data folder, you should creat two file named FaceDB.txt and NonFaceDB.txt.
 
@@ -35,6 +35,9 @@ NonfaceDB.txt
 
 The config is in src/common.cpp 
 
+#TODO
+
+Neg Sample Mining use too much time in the later stages!
 
 #License
 
