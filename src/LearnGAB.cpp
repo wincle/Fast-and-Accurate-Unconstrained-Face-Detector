@@ -204,6 +204,7 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
 
     if(!(stages%20)){
       Save();
+      printf("save the model\n");
     }
 
   }
@@ -240,6 +241,7 @@ void GAB::Save(){
       feaId[j] = feaIds[i][j];
     fwrite(&size,sizeof(int),1,file);
     fwrite(feaId,sizeof(int),feaIds[i].size(),file);
+    delete []feaId;
     size = cutpoints[i].size();
     unsigned char* cutpoint = new unsigned char[2*size];
     for(int j = 0;j<size;j++){
@@ -248,6 +250,7 @@ void GAB::Save(){
     }
     fwrite(&size,sizeof(int),1,file);
     fwrite(cutpoint,sizeof(unsigned char),2*cutpoints[i].size(),file);
+    delete []cutpoint;
     size = leftChilds[i].size();
     fwrite(&size,sizeof(int),1,file);
     int *leftChild = new int[size];
@@ -255,6 +258,7 @@ void GAB::Save(){
       leftChild[j] = leftChilds[i][j];
     }
     fwrite(leftChild,sizeof(int),leftChilds[i].size(),file);
+    delete []leftChild;
     size = rightChilds[i].size();
     int *rightChild = new int[size];
     for(int j = 0;j<size;j++){
@@ -262,6 +266,7 @@ void GAB::Save(){
     }
     fwrite(&size,sizeof(int),1,file);
     fwrite(rightChild,sizeof(int),rightChilds[i].size(),file);
+    delete []rightChild;
     size = fits[i].size();
     float *fit = new float[size];
     for(int j = 0;j<size;j++){
@@ -269,16 +274,12 @@ void GAB::Save(){
     }
     fwrite(&size,sizeof(int),1,file);
     fwrite(fit,sizeof(float),fits[i].size(),file);
+    delete []fit;
     int depth = depths[i];
     fwrite(&depth,sizeof(int),1,file);
     float threshold = thresholds[i];
     fwrite(&threshold,sizeof(float),1,file);
 
-    delete []feaId;
-    delete []cutpoint;
-    delete []leftChild;
-    delete []rightChild;
-    delete []fit;
   }
   fclose(file);
 }

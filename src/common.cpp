@@ -2,11 +2,11 @@
 #define MAX 100000000;
 
 Options::Options(){ //default value
-  objSize = 20;
+  objSize = 24;
   negRatio = 1.0;
   numFaces =  MAX;
   treeLevel = 8;
-  maxNumWeaks = 100;
+  maxNumWeaks = 1000;
   minDR = 1.0;
   maxFAR = 1e-16;
   minSamples = 100;

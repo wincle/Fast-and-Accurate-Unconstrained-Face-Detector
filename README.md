@@ -3,7 +3,11 @@
 The C++ implementation of NPD
 
 Notice:The code is being Test!
-I haven't train a model out with large size data.
+
+The result is trained by 10k pos data and the template is 24*24 , the stages num is 60 , that png shows its ability.
+
+I will create a new branch for large size data , now the project compute feature all at once , if the template is 24*24 , the NPD features number is 165600 , so the 10k pos and 10k neg traing will cost at least 3Gb memory .
+
 
 # Difference with Matlab Code
 
@@ -37,7 +41,8 @@ The config is in src/common.cpp
 
 #TODO
 
-Neg Sample Mining use too much time in the later stages!
+- pos data augment
+- add retrain function
 
 #License
 
