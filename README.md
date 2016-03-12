@@ -13,7 +13,6 @@ I will create a new branch for large size data , now the project compute feature
 
 - Neg Samples Mining in every Iter.
 - Always training in LearGAB , don't jump out to TrainDector as Matlab Code.
-- Can't retrain.
 
 # How to use
 - you should mkdir data first
@@ -42,7 +41,6 @@ The config is in src/common.cpp
 #TODO
 
 - pos data augment
-- add retrain function
 
 #License
 
