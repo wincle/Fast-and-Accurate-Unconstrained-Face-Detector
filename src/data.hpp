@@ -7,9 +7,9 @@
 class DataSet {
   public:
     DataSet();
-    static void LoadDataSet(DataSet& pos, DataSet& neg);
+    static void LoadDataSet(DataSet& pos, DataSet& neg, int stages);
     void LoadPositiveDataSet(const std::string& positive);
-    void LoadNegativeDataSet(const std::string& negative,const int pos_num);
+    void LoadNegativeDataSet(const std::string& negative,const int pos_num,int stages);
     cv::Mat NextImage(int );
     void MoreNeg(int );
     void Remove(vector<int>);

@@ -48,17 +48,48 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
   int nPos = pos.size;
   int nNeg = neg.size;
 
+  float _FAR=1.0;
+  int nFea=0;
+  float aveEval=0;
+
+  float *w = new float[nPos];
+
+  if(stages!=0){
+    int fail = 0;
+    #pragma omp parallel for
+    for (int i = 0; i < pos.size; i++) {
+      float score = 0;
+      if(NPDClassify(pos.imgs[i].clone(),score)){
+          neg.Fx[i]=score;
+      }
+      else{
+        fail ++;
+        printf("%d\n",i);
+      }
+    }
+    if(fail!=0){
+      printf("you should't change pos data! %d \n",fail);
+      return;
+    }
+
+    MiningNeg(0,neg);
+
+    if(neg.imgs.size()<pos.imgs.size()){
+      printf("neg not enough, change neg rate or add neg Imgs %d %d\n",pos.imgs.size(),neg.imgs.size());
+      return;
+    }
+
+    pos.CalcWeight(1,opt.maxWeight);
+    neg.CalcWeight(-1,opt.maxWeight);
+
+  }
+
   Mat faceFea = pos.Extract();
   pos.ImgClear();
   printf("Extract pos feature finish\n");
   Mat nonfaceFea = neg.Extract();
   printf("Extract neg feature finish\n");
 
-  float _FAR=1.0;
-  int nFea=0;
-  float aveEval=0;
-
-  float *w = new float[nPos];
   for (int t = stages;t<opt.maxNumWeaks;t++){
     printf("start training %d stages \n",t);
     gettimeofday(&start,NULL);
@@ -149,7 +180,7 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
 
     memcpy(w,pos.Fx,nPos*sizeof(float));
     sort(w,w+nPos);
-    int index = max(floor(nPos*(1-opt.minDR)),1);
+    int index = max(floor(nPos*(1-opt.minDR)),0);
     float threshold = w[index];
 
     for(iter = negPassIndex.begin(); iter != negPassIndex.end();){
@@ -432,12 +463,15 @@ void GAB::MiningNeg(int st,DataSet& neg){
 
 void GAB::LoadModel(string path){
   FILE* file;
-  file = fopen(path.c_str(), "rb");
+  if((file = fopen(path.c_str(), "rb"))==NULL)
+    return;
   int size;
 
   fread(&DetectSize,sizeof(int),1,file);
   fread(&stages,sizeof(int),1,file);
+  printf("stages num :%d\n",stages);
   for(int j = 0;j<stages;j++){
+    printf("stage: %d\n",j);
     vector<int> feaId, leftChild, rightChild;
     vector< vector<unsigned char> > cutpoint;
     vector<float> fit;
@@ -447,8 +481,10 @@ void GAB::LoadModel(string path){
     fread(&size,sizeof(int),1,file);
     int *_feaId = new int[size];
     fread(_feaId,sizeof(int),size,file);
-    for(int i = 0;i<size;i++)
+    for(int i = 0;i<size;i++){
       feaId.push_back(_feaId[i]);
+    }
+    printf("\n");
     fread(&size,sizeof(int),1,file);
     unsigned char *_cutpoint = new unsigned char[size*2];
     fread(_cutpoint,sizeof(unsigned char),2*size,file);

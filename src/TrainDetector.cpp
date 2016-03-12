@@ -10,9 +10,10 @@ using namespace cv;
 void TrainDetector::Train(){
   Options& opt = Options::GetInstance();
   DataSet pos,neg;
-  DataSet::LoadDataSet(pos, neg);
 
   GAB Gab;
+  Gab.LoadModel(opt.outFile);
+  DataSet::LoadDataSet(pos, neg, Gab.stages);
   Gab.LearnGAB(pos,neg);
   Gab.Save();
   pos.Clear();

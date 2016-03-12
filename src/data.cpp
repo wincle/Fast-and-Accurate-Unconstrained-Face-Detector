@@ -27,13 +27,13 @@ DataSet::DataSet(){
 
 }
 
-void DataSet::LoadDataSet(DataSet& pos, DataSet& neg){
+void DataSet::LoadDataSet(DataSet& pos, DataSet& neg, int stages){
   const Options& opt = Options::GetInstance();
   printf("Loading Pos data\n");
   pos.LoadPositiveDataSet(opt.faceDBFile);
   printf("Pos data finish\n");
   printf("Loading Neg data\n");
-  neg.LoadNegativeDataSet(opt.nonfaceDBFile,pos.size);
+  neg.LoadNegativeDataSet(opt.nonfaceDBFile,pos.size,stages);
   printf("Neg data finish\n");
 }
 void DataSet::LoadPositiveDataSet(const string& positive){
@@ -71,7 +71,7 @@ void DataSet::LoadPositiveDataSet(const string& positive){
   initWeights();
 }
 
-void DataSet::LoadNegativeDataSet(const string& negative, int pos_num){
+void DataSet::LoadNegativeDataSet(const string& negative, int pos_num, int stages){
   const Options& opt = Options::GetInstance();
   FILE* file = fopen(negative.c_str(), "r");
   char buff[256];
@@ -83,16 +83,17 @@ void DataSet::LoadNegativeDataSet(const string& negative, int pos_num){
   random_shuffle(list.begin(),list.end());
   imgs.reserve(size + omp_get_max_threads());
   initWeights();
-  MoreNeg(ceil(size*opt.negRatio));
+  for(int k = 0; k<omp_get_max_threads() ; k++){
+    Mat img = imread(list[k],CV_LOAD_IMAGE_GRAYSCALE);
+    NegImgs.push_back(img.clone());
+  }
+  if(stages == 0)
+    MoreNeg(ceil(size*opt.negRatio));
 }
 void DataSet::MoreNeg(const int n){
   const Options& opt = Options::GetInstance();
   int pool_size = omp_get_max_threads();
   vector<Mat> region_pool(pool_size);
-  for(int k = 0; k<omp_get_max_threads() ; k++){
-    Mat img = imread(list[k],CV_LOAD_IMAGE_GRAYSCALE);
-    NegImgs.push_back(img.clone());
-  }
   int num = 0;
   srand(time(0));
 
