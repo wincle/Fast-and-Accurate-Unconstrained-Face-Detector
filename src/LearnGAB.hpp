@@ -34,6 +34,8 @@ class GAB{
     vector<int> rpoints;
     cv::Mat ppNpdTable;
 
+    double minRate;
+
   public:
     int DetectSize;
     vector<int> DetectFace(cv::Mat,vector<cv::Rect>& ,vector<float>& );

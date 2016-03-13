@@ -38,6 +38,8 @@ GAB::GAB(){
     }
   } 
 
+  minRate = 0.001;
+
 }
 
 void GAB::LearnGAB(DataSet& pos, DataSet& neg){
@@ -444,13 +446,13 @@ void GAB::MiningNeg(int st,DataSet& neg){
       all++;
     }
     rate = ((double)(need))/(double)iter_all;
-    if(rate < 0.001){
+    if(rate < minRate){
       need = n - st;
       iter_all = 0;
       neg.current_id += pool_size;
       if (neg.current_id>neg.list.size()){
-        printf("ran out of NegImgs!!!\n");
-        break;
+        neg.current_id = 0;
+        minRate /= 10;
       }
       for(int k =0 ;k< pool_size;k++){
         Mat img = imread(neg.list[k+neg.current_id],CV_LOAD_IMAGE_GRAYSCALE);
