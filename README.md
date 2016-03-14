@@ -37,8 +37,6 @@ The config is in src/common.cpp
 
 #TODO
 
-I will create a new branch for large size data , now the project compute feature all at once , if the template is 24*24 , the NPD features number is 165600 , so the 10k pos and 10k neg traing will cost at least 3Gb memory .
- 
 
 #License
 

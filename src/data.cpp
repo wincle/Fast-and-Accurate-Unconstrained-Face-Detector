@@ -7,23 +7,13 @@ using namespace cv;
 
 
 DataSet::DataSet(){
-  ppNpdTable = Mat(256,256,CV_8UC1);
+  const Options& opt = Options::GetInstance();
 
-  for(int i = 0; i < 256; i++)
-  {
-    for(int j = 0; j < 256; j++)
-    {
-      double fea = 0.5;
-      if(i > 0 || j > 0) fea = double(i) / (double(i) + double(j));
-      fea = floor(256 * fea);
-      if(fea > 255) fea = 255;
-
-      ppNpdTable.at<uchar>(i,j) = (unsigned char) fea;
-    }
-  }
   x = 0;
   y = 0;
   current_id = 0;
+  numPixels = opt.objSize * opt.objSize;
+  feaDims = numPixels * (numPixels - 1) / 2;
 
 }
 
@@ -31,10 +21,10 @@ void DataSet::LoadDataSet(DataSet& pos, DataSet& neg, int stages){
   const Options& opt = Options::GetInstance();
   printf("Loading Pos data\n");
   pos.LoadPositiveDataSet(opt.faceDBFile,stages);
-  printf("Pos data finish %d %d\n",pos.size,pos.imgs.size());
+  printf("Pos data finish %d\n",pos.size);
   printf("Loading Neg data\n");
   neg.LoadNegativeDataSet(opt.nonfaceDBFile,pos.size,stages);
-  printf("Neg data finish %d %d\n",neg.size,neg.imgs.size());
+  printf("Neg data finish %d\n",neg.size);
 }
 void DataSet::LoadPositiveDataSet(const string& positive,int stages){
   const Options& opt = Options::GetInstance();
@@ -269,7 +259,7 @@ void DataSet::Remove(vector<int> PassIndex){
   delete []tmpFx;
 }
 
-Mat DataSet::Extract(){
+Mat DataSet::ExtractPixel(){
   Options& opt = Options::GetInstance();
   int numThreads = omp_get_num_procs();
   omp_set_num_threads(numThreads);
@@ -286,20 +276,14 @@ Mat DataSet::Extract(){
   #pragma omp parallel for
   for(int k = 0; k < numImgs; k++)
   {
-    int x1,y1,x2,y2,d;
-    d = 0;
+    int x,y;
     Mat img = imgs[k];
     for(int i = 0; i < numPixels; i++)
     {
-      y1 = i%opt.objSize;
-      x1 = i/opt.objSize;
-      for(int j = i+1; j < numPixels; j ++)
-      {
-        y2 = j%opt.objSize;
-        x2 = j/opt.objSize;
+      y = i%opt.objSize;
+      x = i/opt.objSize;
 
-        fea.at<uchar>(d++,k) = ppNpdTable.at<uchar>(img.at<uchar>(x1,y1),img.at<uchar>(x2,y2));
-      }
+      fea.at<uchar>(i,k) = img.at<uchar>(x,y);
     }
   }
   return fea;

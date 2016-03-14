@@ -20,6 +20,7 @@ class GAB{
     void CalcWeight(float F[], float Fx[], int y, int maxWeight, vector<int> negPassIndex);
     bool NPDClassify(cv::Mat test,float &score);
     void GetPoints(int feaid, int *x1, int *y1, int *x2, int *y2);
+    void GetPoints(int feaid, int *x, int *y);
     void MiningNeg(const int n,DataSet& neg);
     void LoadModel(string path);
   public:

@@ -1,22 +1,50 @@
 #include "LearnDQT.hpp"
 
+DQT::DQT(){
+  const Options& opt = Options::GetInstance();
+
+  ppNpdTable = cv::Mat(256,256,CV_8UC1);
+  for(int i = 0; i < 256; i++)
+  {
+    for(int j = 0; j < 256; j++)
+    {
+      double fea = 0.5;
+      if(i > 0 || j > 0) fea = double(i) / (double(i) + double(j));
+      fea = floor(256 * fea);
+      if(fea > 255) fea = 255;
+
+      ppNpdTable.at<uchar>(i,j) = (unsigned char) fea;
+    }
+  }
+
+  size_t numPixels = opt.objSize*opt.objSize;
+  for(int i = 0; i < numPixels; i++)
+  {
+    for(int j = i+1; j < numPixels; j ++)
+    {
+      lpoints.push_back(i);
+      rpoints.push_back(j);
+    }
+  }
+}
+
 float DQT::Learn(cv::Mat posX,cv::Mat negX, float pPosW[], float pNegW[], vector<int> posIndex,vector<int> negIndex, int minLeaf, vector<int> &feaId, vector<int> &leftChild, vector<int> &rightChild, vector< vector<unsigned char> > &cutpoint, vector<float> &fit){
   const Options& opt = Options::GetInstance();
   int treeLevel = opt.treeLevel;
   int numThreads = omp_get_num_procs();
   int nTotalPos = posX.cols;
   int nTotalNeg = negX.cols;
-  int feaDims = posX.rows;
   int nPos = posIndex.size();
   int nNeg = negIndex.size();
+  int numPixels = opt.objSize*opt.objSize;
 
-  vector<unsigned char *> ppPosX(feaDims);
+  vector<unsigned char *> ppPosX(numPixels);
   ppPosX[0] = (unsigned char *)posX.data;
-  for(int i = 1; i < feaDims; i++) ppPosX[i] = ppPosX[i-1] + nTotalPos;
+  for(int i = 1; i < numPixels; i++) ppPosX[i] = ppPosX[i-1] + nTotalPos;
 
-  vector<unsigned char *> ppNegX(feaDims);
+  vector<unsigned char *> ppNegX(numPixels);
   ppNegX[0] = (unsigned char *)negX.data;
-  for(int i = 1; i < feaDims; i++) ppNegX[i] = ppNegX[i-1] + nTotalNeg;
+  for(int i = 1; i < numPixels; i++) ppNegX[i] = ppNegX[i-1] + nTotalNeg;
 
   int pPosIndex[nPos];
   int pNegIndex[nNeg];
@@ -59,7 +87,11 @@ float DQT::LearnDQT(vector<unsigned char *> &posX, vector<unsigned char *> &negX
 
   for(int j = 0; j < nPos; j++)
   {
-    if(posX[size_t(_feaId)][size_t(posIndex[j])] < _cutpoint[0] || posX[size_t(_feaId)][size_t(posIndex[j])] > _cutpoint[1])
+    int x,y;
+    GetPoints(_feaId,&x,&y);
+    unsigned char Fea = ppNpdTable.at<uchar>(posX[size_t(x)][size_t(posIndex[j])],posX[size_t(y)][size_t(posIndex[j])]);
+
+    if(Fea < _cutpoint[0] || Fea > _cutpoint[1])
     {
       posIndex1[nPos1++] = posIndex[j];
     }
@@ -71,7 +103,11 @@ float DQT::LearnDQT(vector<unsigned char *> &posX, vector<unsigned char *> &negX
 
   for(int j = 0; j < nNeg; j++)
   {
-    if(negX[size_t(_feaId)][size_t(negIndex[j])] < _cutpoint[0] || negX[size_t(_feaId)][size_t(negIndex[j])] > _cutpoint[1])
+    int x,y;
+    GetPoints(_feaId,&x,&y);
+    unsigned char Fea = ppNpdTable.at<uchar>(negX[size_t(x)][size_t(negIndex[j])],negX[size_t(y)][size_t(negIndex[j])]);
+
+    if(Fea < _cutpoint[0] || Fea > _cutpoint[1])
     {
       negIndex1[nNeg1++] = negIndex[j];
     }                                                  
@@ -171,7 +207,7 @@ float DQT::LearnQuadStump(vector<unsigned char *> &posX, vector<unsigned char *>
   feaId = -1;
   if(nPos == 0 || nNeg == 0 || nPos + nNeg < 2 * minLeaf) return minCost;
 
-  int feaDims = (int) posX.size();
+  int feaDims = (int) posX.size()*(posX.size()-1)/2;
   minCost = 1e16f;
 
   omp_set_num_threads(numThreads);
@@ -186,8 +222,11 @@ float DQT::LearnQuadStump(vector<unsigned char *> &posX, vector<unsigned char *>
 
     memset(count, 0, 256 * sizeof(int));
 
-    WeightHist(posX[i], posW, posIndex, nPos, count, posWHist);
-    WeightHist(negX[i], negW, negIndex, nNeg, count, negWHist);
+    int x,y;
+    GetPoints(i,&x,&y);
+
+    WeightHist(posX[x], posX[y], posW, posIndex, nPos, count, posWHist);
+    WeightHist(negX[x], negX[y], negW, negIndex, nNeg, count, negWHist);
 
     float posWSum = 0;
     float negWSum = 0;
@@ -267,14 +306,22 @@ float DQT::LearnQuadStump(vector<unsigned char *> &posX, vector<unsigned char *>
 }
 
 
-void DQT::WeightHist(unsigned char *X, float *W, int *index, int n, int count[256], float wHist[256])
+void DQT::WeightHist(unsigned char *X, unsigned char *Y, float *W, int *index, int n, int count[256], float wHist[256])
 {
   memset(wHist, 0, 256 * sizeof(float));
 
   for(int j = 0; j < n; j++)
   {
-    unsigned char bin = X[ index[j] ];
+    unsigned char bin = ppNpdTable.at<uchar>(X[ index[j] ],Y[ index[j] ]);
     count[bin]++; 
     wHist[bin] += W[ index[j] ];
   }
 } 
+
+void DQT::GetPoints(int feaid, int *x, int *y){
+  const Options& opt = Options::GetInstance();
+  int lpoint = lpoints[feaid];
+  int rpoint = rpoints[feaid];
+  *x = lpoint;
+  *y = rpoint;
+}

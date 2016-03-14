@@ -15,18 +15,18 @@ class DataSet {
     void Remove(vector<int>);
     void ImgClear();
     void initWeights();
-    cv::Mat Extract();
+    cv::Mat ExtractPixel();
     void CalcWeight(int y, int maxWeight);
     void Clear();
   public:
-    cv::Mat ppNpdTable;
     std::vector<cv::Mat> imgs;
     int size;
+    int numPixels;
+    int feaDims;
 
     float *W;
     float *Fx;
     
-
     //neg only
     std::vector<std::string> list;
     std::vector<cv::Mat> NegImgs;

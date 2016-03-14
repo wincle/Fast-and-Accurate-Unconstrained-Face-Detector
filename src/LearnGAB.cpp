@@ -85,10 +85,10 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
 
   }
 
-  Mat faceFea = pos.Extract();
+  Mat faceFea = pos.ExtractPixel();
   pos.ImgClear();
   printf("Extract pos feature finish\n");
-  Mat nonfaceFea = neg.Extract();
+  Mat nonfaceFea = neg.ExtractPixel();
   printf("Extract neg feature finish\n");
 
   for (int t = stages;t<opt.maxNumWeaks;t++){
@@ -164,12 +164,20 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
 
     Mat posX(feaId.size(),faceFea.cols,CV_8UC1);
     for(int i = 0;i<feaId.size();i++)
-      for(int j = 0;j<faceFea.cols;j++)
-        posX.at<uchar>(i,j) = faceFea.at<uchar>(feaId[i],j);
+      for(int j = 0;j<faceFea.cols;j++){
+        int x,y;
+        GetPoints(feaId[i],&x,&y);
+        unsigned char Fea = ppNpdTable.at<uchar>(faceFea.at<uchar>(x,j),faceFea.at<uchar>(y,j));
+        posX.at<uchar>(i,j) = Fea;
+      }
     Mat negX(feaId.size(),nonfaceFea.cols,CV_8UC1);
     for(int i = 0;i<feaId.size();i++)
-      for(int j = 0;j<nonfaceFea.cols;j++)
-        negX.at<uchar>(i,j) = nonfaceFea.at<uchar>(feaId[i],j);
+      for(int j = 0;j<nonfaceFea.cols;j++){
+        int x,y;
+        GetPoints(feaId[i],&x,&y);
+        unsigned char Fea = ppNpdTable.at<uchar>(nonfaceFea.at<uchar>(x,j),nonfaceFea.at<uchar>(y,j));
+        negX.at<uchar>(i,j) = Fea;
+      }
 
     TestDQT(pos.Fx,fit,cutpoint,leftChild,rightChild,posX);
     TestDQT(neg.Fx,fit,cutpoint,leftChild,rightChild,negX);
@@ -226,7 +234,7 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
     if(neg.imgs.size()<pos.imgs.size())
       break;
 
-    nonfaceFea = neg.Extract();
+    nonfaceFea = neg.ExtractPixel();
     pos.CalcWeight(1,opt.maxWeight);
     neg.CalcWeight(-1,opt.maxWeight);
     
@@ -406,6 +414,14 @@ void GAB::GetPoints(int feaid, int *x1, int *y1, int *x2, int *y2){
   *x1 = lpoint/opt.objSize;
   *y2 = rpoint%opt.objSize;
   *x2 = rpoint/opt.objSize;
+}
+
+void GAB::GetPoints(int feaid, int *x, int *y){
+  const Options& opt = Options::GetInstance();
+  int lpoint = lpoints[feaid];
+  int rpoint = rpoints[feaid];
+  *x = lpoint;
+  *y = rpoint;
 }
 
 void GAB::MiningNeg(int st,DataSet& neg){

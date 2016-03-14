@@ -21,6 +21,6 @@ Options::Options(){ //default value
   minLeafFrac = 0.01;
   minLeaf = 100;
   maxWeight = 100;
-  augment = true;
-  saveStep = 2;
+  augment = false;
+  saveStep = 20;
 }
