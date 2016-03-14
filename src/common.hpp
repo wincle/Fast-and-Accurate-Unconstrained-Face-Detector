@@ -19,6 +19,7 @@ class Options{
     string nonfaceDBFile;
     string outFile;
     string fddb_dir;
+    string tmpfile;
     int treeLevel;
     int maxNumWeaks;
     double minDR;
@@ -30,6 +31,8 @@ class Options{
     int minLeaf;
     double samFrac;
     double trimFrac;
+    bool augment;
+    int saveStep;
 
   private:
     Options();

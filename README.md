@@ -4,10 +4,7 @@ The C++ implementation of NPD
 
 Notice:The code is being Test!
 
-The result is trained by 10k pos data and the template is 24*24 , the stages num is 180 , that png shows its ability.
-
-I will create a new branch for large size data , now the project compute feature all at once , if the template is 24*24 , the NPD features number is 165600 , so the 10k pos and 10k neg traing will cost at least 3Gb memory .
-
+The result is trained by 10k pos data and the template is 24*24 , the stages num is 180
 
 # Difference with Matlab Code
 
@@ -40,7 +37,8 @@ The config is in src/common.cpp
 
 #TODO
 
-- pos data augment
+I will create a new branch for large size data , now the project compute feature all at once , if the template is 24*24 , the NPD features number is 165600 , so the 10k pos and 10k neg traing will cost at least 3Gb memory .
+ 
 
 #License
 

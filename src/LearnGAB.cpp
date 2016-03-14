@@ -59,14 +59,13 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
   if(stages!=0){
     int fail = 0;
     #pragma omp parallel for
-    for (int i = 0; i < pos.size; i++) {
+    for (int i = 0; i < nPos; i++) {
       float score = 0;
       if(NPDClassify(pos.imgs[i].clone(),score)){
-          neg.Fx[i]=score;
+          pos.Fx[i]=score;
       }
       else{
         fail ++;
-        printf("%d\n",i);
       }
     }
     if(fail!=0){
@@ -235,7 +234,7 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
     float Ttime = (Tend.tv_sec - Tstart.tv_sec);
     printf("neg mining time:%.3fs\n",Ttime);
 
-    if(!(stages%20)){
+    if(!(stages%opt.saveStep)){
       Save();
       printf("save the model\n");
     }
@@ -275,29 +274,23 @@ void GAB::Save(){
     fwrite(&size,sizeof(int),1,file);
     fwrite(feaId,sizeof(int),feaIds[i].size(),file);
     delete []feaId;
-    size = cutpoints[i].size();
     unsigned char* cutpoint = new unsigned char[2*size];
     for(int j = 0;j<size;j++){
       cutpoint[2*j] = cutpoints[i][j][0];
       cutpoint[2*j+1] = cutpoints[i][j][1];
     }
-    fwrite(&size,sizeof(int),1,file);
     fwrite(cutpoint,sizeof(unsigned char),2*cutpoints[i].size(),file);
     delete []cutpoint;
-    size = leftChilds[i].size();
-    fwrite(&size,sizeof(int),1,file);
     int *leftChild = new int[size];
     for(int j = 0;j<size;j++){
       leftChild[j] = leftChilds[i][j];
     }
     fwrite(leftChild,sizeof(int),leftChilds[i].size(),file);
     delete []leftChild;
-    size = rightChilds[i].size();
     int *rightChild = new int[size];
     for(int j = 0;j<size;j++){
       rightChild[j] = rightChilds[i][j];
     }
-    fwrite(&size,sizeof(int),1,file);
     fwrite(rightChild,sizeof(int),rightChilds[i].size(),file);
     delete []rightChild;
     size = fits[i].size();
@@ -450,7 +443,7 @@ void GAB::MiningNeg(int st,DataSet& neg){
       need = n - st;
       iter_all = 0;
       neg.current_id += pool_size;
-      if (neg.current_id>neg.list.size()){
+      if ((neg.current_id+pool_size)>=neg.list.size()){
         neg.current_id = 0;
         minRate /= 10;
       }
@@ -487,7 +480,6 @@ void GAB::LoadModel(string path){
       feaId.push_back(_feaId[i]);
     }
     printf("\n");
-    fread(&size,sizeof(int),1,file);
     unsigned char *_cutpoint = new unsigned char[size*2];
     fread(_cutpoint,sizeof(unsigned char),2*size,file);
     for(int i =0;i<size;i++){
@@ -496,12 +488,10 @@ void GAB::LoadModel(string path){
       cut.push_back(_cutpoint[2*i+1]);
       cutpoint.push_back(cut);
     }
-    fread(&size,sizeof(int),1,file);
     int *_leftChild = new int[size];
     fread(_leftChild,sizeof(int),size,file);
     for(int i =0;i<size;i++)
       leftChild.push_back(_leftChild[i]);
-    fread(&size,sizeof(int),1,file);
     int *_rightChild = new int[size];
     fread(_rightChild,sizeof(int),size,file);
     for(int i =0;i<size;i++){

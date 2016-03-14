@@ -30,42 +30,115 @@ DataSet::DataSet(){
 void DataSet::LoadDataSet(DataSet& pos, DataSet& neg, int stages){
   const Options& opt = Options::GetInstance();
   printf("Loading Pos data\n");
-  pos.LoadPositiveDataSet(opt.faceDBFile);
-  printf("Pos data finish\n");
+  pos.LoadPositiveDataSet(opt.faceDBFile,stages);
+  printf("Pos data finish %d %d\n",pos.size,pos.imgs.size());
   printf("Loading Neg data\n");
   neg.LoadNegativeDataSet(opt.nonfaceDBFile,pos.size,stages);
-  printf("Neg data finish\n");
+  printf("Neg data finish %d %d\n",neg.size,neg.imgs.size());
 }
-void DataSet::LoadPositiveDataSet(const string& positive){
+void DataSet::LoadPositiveDataSet(const string& positive,int stages){
   const Options& opt = Options::GetInstance();
-  FILE* file = fopen(positive.c_str(), "r");
+  FILE *file;
+  vector<int> is_flip;
   char buff[300];
   vector<string> path;
   vector<Rect> bboxes;
-  imgs.clear();
-  while (fscanf(file, "%s", buff) > 0) {
-    path.push_back(string(buff));
-    Rect bbox;
-    fscanf(file, "%d%d%d%d", &bbox.x, &bbox.y, &bbox.width, &bbox.height);    
-    bboxes.push_back(bbox);
+
+  if(!opt.augment || stages == 0){
+    file = fopen(positive.c_str(), "r");
+    while (fscanf(file, "%s", buff) > 0) {
+      path.push_back(string(buff));
+      Rect bbox;
+      fscanf(file, "%d%d%d%d", &bbox.x, &bbox.y, &bbox.width, &bbox.height);  
+      bboxes.push_back(bbox);
+      is_flip.push_back(0);
     }
+  }
+  else{
+    file = fopen(opt.tmpfile.c_str(), "r");
+    while (fscanf(file, "%s", buff) > 0) {
+      path.push_back(string(buff));
+      Rect bbox;
+      int flip;
+      fscanf(file, "%d%d%d%d%d", &bbox.x, &bbox.y, &bbox.width, &bbox.height, &flip);  
+      is_flip.push_back(flip);
+      bboxes.push_back(bbox);
+    }
+  }
+
   fclose(file);
   const int n = path.size();
   size = n;
-  imgs.resize(size);
-  #pragma omp parallel for
-  for (int i = 0; i < n; i++) {
-    Mat origin = imread(path[i], CV_LOAD_IMAGE_GRAYSCALE);
-    if (!origin.data) {
-      printf("Can not open %s",path[i].c_str());
+  if(!opt.augment || stages != 0){
+    imgs.resize(size);
+    #pragma omp parallel for
+    for (int i = 0; i < n; i++) {
+      Mat origin = imread(path[i], CV_LOAD_IMAGE_GRAYSCALE);
+      if (!origin.data) {
+        printf("Can not open %s",path[i].c_str());
+      }
+      Mat tmp = origin.clone();
+      if(is_flip[i])
+        flip(tmp,tmp,1);
+      Mat face = tmp(bboxes[i]);
+      Mat img;
+      cv::resize(face, img, Size(opt.objSize, opt.objSize));
+      imgs[i] = img.clone();
     }
-    Mat face = origin(bboxes[i]);
-    Mat img;
-    cv::resize(face, img, Size(opt.objSize, opt.objSize));
-    char dir[256];
-    sprintf(dir,"hd/%d.jpg",i);
-    cv::imwrite(dir,img);
-    imgs[i] = img;
+  }
+  else
+  {
+    FILE* tmpfile = fopen(opt.tmpfile.c_str(),"w");
+    size = size*10;
+    imgs.resize(size);
+    #pragma omp parallel for
+    for(int i = 0; i < n; i++) {
+      Mat origin = imread(path[i], CV_LOAD_IMAGE_GRAYSCALE);
+      if (!origin.data) {
+        printf("Can not open %s",path[i].c_str());
+      }
+      int type = 0;
+      int stmp,xtmp,ytmp;
+      int s = bboxes[i].width;
+
+      while(type < 5){
+        srand(time(0)+type);
+        do{
+          stmp = s*((float)(rand()%20)/100.0+0.9);
+          xtmp = bboxes[i].x+s*((float)(rand()%10)/100.0-0.05);
+          ytmp = bboxes[i].y+s*((float)(rand()%10)/100.0-0.05);
+        }while(xtmp<0 || ytmp<0 || (xtmp+stmp)>origin.cols || (ytmp+stmp)>origin.rows);
+        Rect rect(xtmp,ytmp,stmp,stmp);
+        fprintf(tmpfile,"%s %d %d %d %d 0\n",path[i].c_str(),xtmp,ytmp,stmp,stmp);
+
+        Mat face = origin(rect);
+        Mat img;
+        cv::resize(face, img, Size(opt.objSize, opt.objSize));
+        imgs[i*10+type]=img.clone();
+        type ++;
+      }
+
+      flip(origin,origin,1);
+      bboxes[i].x = origin.cols - bboxes[i].x - bboxes[i].width;
+
+      while(type < 10){
+        srand(time(0)+type);
+        do{
+          stmp = s*((float)(rand()%20)/100.0+0.9);
+          xtmp = bboxes[i].x+s*((float)(rand()%10)/100.0-0.05);
+          ytmp = bboxes[i].y+s*((float)(rand()%10)/100.0-0.05);
+        }while(xtmp<0 || ytmp<0 || (xtmp+stmp)>origin.cols || (ytmp+stmp)>origin.rows);
+        Rect rect(xtmp,ytmp,stmp,stmp);
+        fprintf(tmpfile,"%s %d %d %d %d 1\n",path[i].c_str(),xtmp,ytmp,stmp,stmp);
+
+        Mat face = origin(rect);
+        Mat img;
+        cv::resize(face, img, Size(opt.objSize, opt.objSize));
+        imgs[i*10+type]=img.clone();
+        type ++;
+      }
+    }
+    fclose(tmpfile);
   }
   random_shuffle(imgs.begin(),imgs.end());
   initWeights();
@@ -95,7 +168,6 @@ void DataSet::MoreNeg(const int n){
   int pool_size = omp_get_max_threads();
   vector<Mat> region_pool(pool_size);
   int num = 0;
-  srand(time(0));
 
   int all = 0;
 
@@ -120,16 +192,55 @@ Mat DataSet::NextImage(int i) {
   const int width = img.cols;
   const int height = img.rows;
   int x=0,y=0,s=0;
+  int type=0;
+
+  srand(time(0)+i);
 
   s = w+(int)(rand()%(min(width,height)-w));
   x = rand()%(width-s);
   y = rand()%(height-s);
+  type=rand()%(8);
 
   Rect roi(x, y, s, s);
 
   Mat crop_img = img(roi);
   Mat region;
   resize(crop_img,region,Size(w,w));
+
+  switch(type){
+    case 0:
+      break;
+    case 1:
+      flip(region, region, 0);
+      transpose(region, region);
+      break;
+    case 2:
+      flip(region, region, -1);
+      break;
+    case 3:
+      flip(region, region, 1);
+      transpose(region, region);
+      break;
+    case 4:
+      flip(region, region, 1);
+      break;
+    case 5:
+      flip(region, region, -1);
+      transpose(region, region);
+      break;
+    case 6:
+      flip(region, region, -1);
+      flip(region, region, 1);
+      break;
+    case 7:
+      flip(region, region, 0);
+      transpose(region, region);
+      flip(region, region, 1);
+      break;
+    default:
+      printf("error type!\n");
+      break;
+  }
 
   return region;
 }
