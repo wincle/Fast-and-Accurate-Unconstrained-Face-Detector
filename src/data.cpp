@@ -270,7 +270,7 @@ Mat DataSet::ExtractPixel(){
   size_t numImgs = size;
   size_t feaDims = numPixels * (numPixels - 1) / 2;
 
-  Mat fea = Mat(feaDims,numImgs,CV_8UC1);
+  Mat fea = Mat(numPixels,numImgs,CV_8UC1);
 
 
   #pragma omp parallel for

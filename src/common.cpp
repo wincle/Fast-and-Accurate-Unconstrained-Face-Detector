@@ -6,7 +6,7 @@ Options::Options(){ //default value
   negRatio = 1.0;
   numFaces =  MAX;
   treeLevel = 8;
-  maxNumWeaks = 1000;
+  maxNumWeaks = 1500;
   minDR = 1.0;
   maxFAR = 1e-16;
   minSamples = 10;
@@ -21,6 +21,6 @@ Options::Options(){ //default value
   minLeafFrac = 0.01;
   minLeaf = 100;
   maxWeight = 100;
-  augment = false;
-  saveStep = 20;
+  augment = true;
+  saveStep = 50;
 }
