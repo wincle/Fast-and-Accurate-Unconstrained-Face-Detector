@@ -25,6 +25,8 @@ void TrainDetector::FddbDetect(){
 
   const char* fddb_dir=opt.fddb_dir.c_str();
   string prefix = opt.fddb_dir + string("/");
+  GAB Gab;
+  Gab.LoadModel(opt.outFile);
 
   #pragma omp parallel for
   for(int i = 1;i<=10;i++){
@@ -36,8 +38,6 @@ void TrainDetector::FddbDetect(){
     FILE* fout = fopen(fddb_out, "w");
     char path[300];
 
-    GAB Gab;
-    Gab.LoadModel(opt.outFile);
     while (fscanf(fin, "%s", path) > 0) {
       string full_path = prefix + string(path) + string(".jpg");
       Mat img = imread(full_path, CV_LOAD_IMAGE_GRAYSCALE);

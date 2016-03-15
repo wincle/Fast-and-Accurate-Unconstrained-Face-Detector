@@ -85,9 +85,7 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
 
   }
 
-  printf("here\n");
   Mat faceFea = pos.ExtractPixel();
-  printf("there\n");
   pos.ImgClear();
   printf("Extract pos feature finish\n");
   Mat nonfaceFea = neg.ExtractPixel();

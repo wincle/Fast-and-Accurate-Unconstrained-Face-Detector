@@ -6,9 +6,9 @@ Options::Options(){ //default value
   negRatio = 1.0;
   numFaces =  MAX;
   treeLevel = 8;
-  maxNumWeaks = 1500;
+  maxNumWeaks = 1000;
   minDR = 1.0;
-  maxFAR = 1e-16;
+  maxFAR = 0;
   minSamples = 10;
   faceDBFile = "../data/FaceDB.txt";
   nonfaceDBFile = "../data/NonfaceDB.txt";
@@ -22,5 +22,5 @@ Options::Options(){ //default value
   minLeaf = 100;
   maxWeight = 100;
   augment = true;
-  saveStep = 50;
+  saveStep = 10;
 }

@@ -4,7 +4,7 @@ The C++ implementation of NPD
 
 Notice:The code is being Test!
 
-The result is trained by 10k pos data and the template is 24*24 , the stages num is 180
+The result is trained by 200k pos data and the template is 24*24 , the stages num is 100
 
 # Difference with Matlab Code
 
