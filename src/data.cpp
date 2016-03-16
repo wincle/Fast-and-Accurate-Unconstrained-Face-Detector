@@ -9,8 +9,6 @@ using namespace cv;
 DataSet::DataSet(){
   const Options& opt = Options::GetInstance();
 
-  x = 0;
-  y = 0;
   current_id = 0;
   numPixels = opt.objSize * opt.objSize;
   feaDims = numPixels * (numPixels - 1) / 2;
@@ -151,7 +149,7 @@ void DataSet::LoadNegativeDataSet(const string& negative, int pos_num, int stage
     NegImgs.push_back(img.clone());
   }
   if(stages == 0)
-    MoreNeg(ceil(size*opt.negRatio));
+    MoreNeg(size);
 }
 void DataSet::MoreNeg(const int n){
   const Options& opt = Options::GetInstance();
@@ -253,6 +251,7 @@ void DataSet::Remove(vector<int> PassIndex){
     tmpImgs.push_back(imgs[PassIndex[i]]);
     tmpFx[i] = Fx[PassIndex[i]];
   }
+  size = passNum;
 
   memcpy(Fx,tmpFx,(size+omp_get_max_threads())*sizeof(float));
   imgs = tmpImgs;
