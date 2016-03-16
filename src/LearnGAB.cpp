@@ -95,7 +95,6 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
     printf("start training %d stages \n",t);
     gettimeofday(&start,NULL);
 
-    nNeg = neg.size;
     vector<int> posIndex;
     vector<int> negIndex;
     for(int i=0; i<nPos; i++)
@@ -230,9 +229,8 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
     gettimeofday(&Tstart,NULL); 
 
     neg.Remove(negPassIndex);
-    if(neg.size<opt.minSamples){
-      MiningNeg(nPos,neg);
-    }
+    MiningNeg(nPos,neg);
+   
 
     nonfaceFea = neg.ExtractPixel();
     pos.CalcWeight(1,opt.maxWeight);
@@ -465,7 +463,6 @@ void GAB::MiningNeg(int n,DataSet& neg){
       }
     }
   }
-  neg.size = n;
   printf("mining success rate %lf\n",rate);
 }
 

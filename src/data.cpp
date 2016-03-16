@@ -251,7 +251,6 @@ void DataSet::Remove(vector<int> PassIndex){
     tmpImgs.push_back(imgs[PassIndex[i]]);
     tmpFx[i] = Fx[PassIndex[i]];
   }
-  size = passNum;
 
   memcpy(Fx,tmpFx,(size+omp_get_max_threads())*sizeof(float));
   imgs = tmpImgs;
