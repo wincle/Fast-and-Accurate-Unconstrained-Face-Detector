@@ -7,10 +7,6 @@
 
 using namespace cv;
 
-/*!
- * \breif Training
- * \If exit model than load the model and resume training status
- */
 void TrainDetector::Train(){
   Options& opt = Options::GetInstance();
   DataSet pos,neg;
@@ -24,10 +20,6 @@ void TrainDetector::Train(){
   neg.Clear();
 }
 
-
-/*!
- * \breif Detect For FDDB
- */
 void TrainDetector::FddbDetect(){
   Options& opt = Options::GetInstance();
 

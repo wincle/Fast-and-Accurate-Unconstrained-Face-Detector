@@ -488,7 +488,6 @@ void GAB::LoadModel(string path){
     for(int i = 0;i<size;i++){
       feaId.push_back(_feaId[i]);
     }
-    printf("\n");
     unsigned char *_cutpoint = new unsigned char[size*2];
     fread(_cutpoint,sizeof(unsigned char),2*size,file);
     for(int i =0;i<size;i++){
@@ -563,7 +562,6 @@ vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
   picked = Nms(rects,scores,0.3);
   return picked;
 }
-
 
 vector<int> GAB::Nms(vector<Rect>& rects, vector<float>& scores, float overlap) {
   const int n = rects.size();
