@@ -616,3 +616,8 @@ vector<int> GAB::Nms(vector<Rect>& rects, vector<float>& scores, float overlap) 
   return picked;
 }
 
+Mat GAB::Draw(Mat& img, Rect& rects){
+  Mat img_ = img.clone();
+  rectangle(img,rects,Scalar(0, 0, 255), 2);
+  return img_;
+}

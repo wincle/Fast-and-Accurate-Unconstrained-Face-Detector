@@ -23,6 +23,7 @@ class GAB{
     void GetPoints(int feaid, int *x, int *y);
     void MiningNeg(const int n,DataSet& neg);
     void LoadModel(string path);
+    cv::Mat Draw(cv::Mat& img, cv::Rect& rects);
   public:
     int stages;
     vector< vector<int> > feaIds, leftChilds, rightChilds;
