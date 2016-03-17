@@ -35,8 +35,10 @@ NonfaceDB.txt
 
 The config is in src/common.cpp 
 
-#TODO
+#Contact with me
 
+You can join the Google group NPD_C_Group to talk with each other.
+https://groups.google.com/forum/#!forum/npd_c_group
 
 #License
 
