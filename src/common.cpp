@@ -4,9 +4,9 @@ Options::Options(){ //default value
   objSize = 24;
   treeLevel = 8;
   maxNumWeaks = 1000;
+  numThreads = 16;
   minDR = 1.0;
   maxFAR = 0;
-  minSamples = 10;
   faceDBFile = "../data/FaceDB.txt";
   nonfaceDBFile = "../data/NonfaceDB.txt";
   outFile = "../result";

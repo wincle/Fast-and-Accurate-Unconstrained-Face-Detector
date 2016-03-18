@@ -29,12 +29,12 @@ class Options{
     int treeLevel;
     /* \breif max number of stages */
     int maxNumWeaks;
+    /* \breif threads to use */
+    int numThreads;
     /* \breif recall of positive in every stages */
     double minDR;
     /* \breif end condition of the training */
     double maxFAR;
-    /* \breif minimum samples of negative samples in every stages' training */
-    int minSamples;
     /* \breif max value of weight */
     int maxWeight;
     /* \breif factor for decide leaf number */

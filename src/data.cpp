@@ -10,7 +10,7 @@ DataSet::DataSet(){
   const Options& opt = Options::GetInstance();
 
   int i;
-  for(i=0;i<16;i++){
+  for(i=0;i<opt.numThreads;i++){
     x[i]=0;
     y[i]=0;
     factor[i]=1.2;
@@ -242,7 +242,7 @@ Mat DataSet::NextImage(int i) {
         tranType[i]++;
         if(tranType[i]>7){
           tranType[i] = 0;
-          current_id[i]+=16;
+          current_id[i]+=opt.numThreads;
           Mat tmg = imread(list[current_id[i]],CV_LOAD_IMAGE_GRAYSCALE);
           NegImgs[i] = tmg.clone();
           if(current_id[i]>size){
