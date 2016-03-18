@@ -30,8 +30,20 @@ class DataSet {
     //neg only
     std::vector<std::string> list;
     std::vector<cv::Mat> NegImgs;
-    int current_id;
-    int x,y;
+    /* \breif array of current image to generate negative samples ,
+     *      * set the size to be your cores num */
+    int current_id[16];
+    /* \breif array of location for travel negative images */
+    int x[16];
+    int y[16];
+    /* \breif array of factors for resize negative images when traveling negative images */
+    float factor[16];
+    /* \breif array of step when traveling negative images */
+    int step[16];
+    /* \breif array of flip type when traveling negative images */
+    int tranType[16];
+    /* \breif array of window size  when traveling negative images */
+    int win[16];
 
 
 };

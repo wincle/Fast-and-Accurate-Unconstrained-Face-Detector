@@ -9,9 +9,17 @@ using namespace cv;
 DataSet::DataSet(){
   const Options& opt = Options::GetInstance();
 
-  x = 0;
-  y = 0;
-  current_id = 0;
+  int i;
+  for(i=0;i<16;i++){
+    x[i]=0;
+    y[i]=0;
+    factor[i]=1.2;
+    step[i]=12;
+    tranType[i]=0;
+    win[i]=opt.objSize;
+    current_id[i] = i;
+  }
+
   numPixels = opt.objSize * opt.objSize;
   feaDims = numPixels * (numPixels - 1) / 2;
 
@@ -23,7 +31,7 @@ void DataSet::LoadDataSet(DataSet& pos, DataSet& neg, int stages){
   pos.LoadPositiveDataSet(opt.faceDBFile,stages);
   printf("Pos data finish %d\n",pos.size);
   printf("Loading Neg data\n");
-  neg.LoadNegativeDataSet(opt.nonfaceDBFile,pos.size,stages);
+  neg.LoadNegativeDataSet(opt.nonfaceDBFile,21486,stages);
   printf("Neg data finish %d\n",neg.size);
 }
 void DataSet::LoadPositiveDataSet(const string& positive,int stages){
@@ -175,29 +183,18 @@ void DataSet::MoreNeg(const int n){
 
 Mat DataSet::NextImage(int i) {
   const Options& opt = Options::GetInstance();
-  const int w = opt.objSize;
 
   Mat img = NegImgs[i];
 
   const int width = img.cols;
   const int height = img.rows;
-  int x=0,y=0,s=0;
-  int type=0;
 
-  srand(time(0)+i);
-
-  s = w+(int)(rand()%(min(width,height)-w));
-  x = rand()%(width-s);
-  y = rand()%(height-s);
-  type=rand()%(8);
-
-  Rect roi(x, y, s, s);
-
+  Rect roi(x[i],y[i],win[i],win[i]);
   Mat crop_img = img(roi);
   Mat region;
-  resize(crop_img,region,Size(w,w));
+  resize(crop_img,region,Size(opt.objSize,opt.objSize));
 
-  switch(type){
+  switch(tranType[i]){
     case 0:
       break;
     case 1:
@@ -232,6 +229,37 @@ Mat DataSet::NextImage(int i) {
       break;
   }
 
+  //Next State
+  x[i]+=step[i];
+  if(x[i]>(width-win[i])){
+    x[i] = 0;
+    y[i]+=step[i];
+    if(y[i]>(height-win[i])){
+      y[i] = 0;
+      win[i]*=factor[i];
+      if(win[i]>width || win[i]>height){
+        win[i]=opt.objSize;
+        tranType[i]++;
+        if(tranType[i]>7){
+          tranType[i] = 0;
+          current_id[i]+=16;
+          if(current_id[i]>size){
+            current_id[i]=i;
+            Mat tmg = imread(list[current_id[i]],CV_LOAD_IMAGE_GRAYSCALE);
+            NegImgs[i] = tmg.clone();
+            srand(time(0)+i);
+            factor[i] = 1.+(float)(rand()%50)/100.0;
+            printf("%f should at [1,1.5]\n",factor[i]);
+            step[i] = 12+rand()%12;
+          }
+          else{
+            Mat tmg = imread(list[current_id[i]],CV_LOAD_IMAGE_GRAYSCALE);
+            NegImgs[i] = tmg.clone();
+          }
+        }
+      }
+    }
+  }
   return region;
 }
 
