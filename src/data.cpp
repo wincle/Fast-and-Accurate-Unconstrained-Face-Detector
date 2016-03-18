@@ -28,10 +28,10 @@ DataSet::DataSet(){
 void DataSet::LoadDataSet(DataSet& pos, DataSet& neg, int stages){
   const Options& opt = Options::GetInstance();
   printf("Loading Pos data\n");
-  pos.LoadPositiveDataSet(opt.faceDBFile,stages);
+//  pos.LoadPositiveDataSet(opt.faceDBFile,stages);
   printf("Pos data finish %d\n",pos.size);
   printf("Loading Neg data\n");
-  neg.LoadNegativeDataSet(opt.nonfaceDBFile,21486,stages);
+  neg.LoadNegativeDataSet(opt.nonfaceDBFile,214860,stages);
   printf("Neg data finish %d\n",neg.size);
 }
 void DataSet::LoadPositiveDataSet(const string& positive,int stages){

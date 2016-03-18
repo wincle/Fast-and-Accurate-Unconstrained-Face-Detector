@@ -47,7 +47,8 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
   timeval start, end;
   timeval Tstart, Tend;
   float time = 0;
-  int nPos = pos.size;
+ // int nPos = pos.size;
+  int nPos = 0;
   int nNeg = neg.size;
 
   float _FAR=1.0;
@@ -58,7 +59,7 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
 
   if(stages!=0){
     int fail = 0;
-    #pragma omp parallel for
+/*    #pragma omp parallel for
     for (int i = 0; i < nPos; i++) {
       float score = 0;
       if(NPDClassify(pos.imgs[i].clone(),score)){
@@ -72,7 +73,7 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
       printf("you should't change pos data! %d \n",fail);
       return;
     }
-
+*/
     MiningNeg(0,neg);
     printf("finish");
     if(neg.imgs.size()<pos.imgs.size()){
