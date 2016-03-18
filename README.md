@@ -4,11 +4,8 @@ The C++ implementation of NPD
 
 Notice:The code is being Test!
 
-The result is trained by 200k pos data and the template is 24*24 , the stages num is 100
+The result is trained by 200k pos data and the template is 24*24
 
-# Difference with Matlab Code
-
-- Always training in LearGAB , don't jump out to TrainDector as Matlab Code.
 
 # How to use
 - you should mkdir data first

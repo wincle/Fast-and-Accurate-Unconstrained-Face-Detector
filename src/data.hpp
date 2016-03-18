@@ -109,7 +109,19 @@ class DataSet {
     std::vector<std::string> list;
     /* \breif image pool for generate negative samples */
     std::vector<cv::Mat> NegImgs;
-    /* \breif index of current image to generate negative samples */
-    int current_id;
+    /* \breif array of current image to generate negative samples ,
+     * set the size to be your cores num */
+    int current_id[16];
+    /* \breif array of location for travel negative images */
+    int x[16];
+    int y[16];
+    /* \breif array of factors for resize negative images when traveling negative images */
+    float factor[16];
+    /* \breif array of step when traveling negative images */
+    int step[16];
+    /* \breif array of flip type when traveling negative images */
+    int tranType[16];
+     /* \breif array of window size  when traveling negative images */
+    int win[16];
 };
 #endif

@@ -424,7 +424,6 @@ void GAB::MiningNeg(int n,DataSet& neg){
   vector<Mat> region_pool(pool_size);
   int st = neg.size;
   int all = 0;
-  int iter_all = 0;
   int need = n - st;
   double rate;
 
@@ -445,24 +444,10 @@ void GAB::MiningNeg(int n,DataSet& neg){
           st++;
         }
       }
-      iter_all++;
       all++;
     }
-    rate = ((double)(need))/(double)iter_all;
-    if(rate < minRate){
-      need = n - st;
-      iter_all = 0;
-      neg.current_id += pool_size;
-      if ((neg.current_id+pool_size)>=neg.list.size()){
-        neg.current_id = 0;
-        minRate /= 10;
-      }
-      for(int k =0 ;k< pool_size;k++){
-        Mat img = imread(neg.list[k+neg.current_id],CV_LOAD_IMAGE_GRAYSCALE);
-        neg.NegImgs[k] = img.clone();
-      }
-    }
   }
+  rate = ((double)(need))/(double)all;
   printf("mining success rate %lf\n",rate);
 }
 

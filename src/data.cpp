@@ -9,7 +9,15 @@ using namespace cv;
 DataSet::DataSet(){
   const Options& opt = Options::GetInstance();
 
-  current_id = 0;
+  int i;
+  for(i=0;i<16;i++);
+    current_id[i] = i;
+  memset(x, 0, sizeof(int)*16);
+  memset(y, 0, sizeof(int)*16);
+  memset(factor, 1.2, sizeof(float)*16);
+  memset(step, 12, sizeof(int)*16);
+  memset(win, opt.objSize, sizeof(int)*16);
+  memset(tranType, 0, sizeof(int)*16);
   numPixels = opt.objSize * opt.objSize;
   feaDims = numPixels * (numPixels - 1) / 2;
 
@@ -173,29 +181,19 @@ void DataSet::MoreNeg(const int n){
 
 Mat DataSet::NextImage(int i) {
   const Options& opt = Options::GetInstance();
-  const int w = opt.objSize;
 
-  Mat img = NegImgs[i];
+  int id = current_id[i];
+  Mat img = NegImgs[id];
 
   const int width = img.cols;
   const int height = img.rows;
-  int x=0,y=0,s=0;
-  int type=0;
 
-  srand(time(0)+i);
-
-  s = w+(int)(rand()%(min(width,height)-w));
-  x = rand()%(width-s);
-  y = rand()%(height-s);
-  type=rand()%(8);
-
-  Rect roi(x, y, s, s);
-
+  Rect roi(x[i],y[i],win[i],win[i]);
   Mat crop_img = img(roi);
   Mat region;
-  resize(crop_img,region,Size(w,w));
+  resize(crop_img,region,Size(opt.objSize,opt.objSize));
 
-  switch(type){
+  switch(tranType[i]){
     case 0:
       break;
     case 1:
@@ -228,6 +226,35 @@ Mat DataSet::NextImage(int i) {
     default:
       printf("error type!\n");
       break;
+  }
+
+  //Next State
+  x[i]+=step[i];
+  if(x[i]>width){
+    x[i] = 0;
+    y[i]+=step[i];
+    if(y[i]>height){
+      y[i] = 0;
+      win[i]*=factor[i];
+      if(win[i]>width || win[i]>height){
+        win[i]=opt.objSize;
+        tranType[i]++;
+        if(tranType[i]>7){
+          tranType[i] = 0;
+          current_id[i]+=16;
+          Mat tmg = imread(list[current_id[i]],CV_LOAD_IMAGE_GRAYSCALE);
+          NegImgs[i] = tmg.clone();
+          if(current_id[i]>size){
+            current_id[i]=i;
+            Mat tmg = imread(list[current_id[i]],CV_LOAD_IMAGE_GRAYSCALE);
+            NegImgs[i] = tmg.clone();
+            srand(time(0)+i);
+            factor[i] = 1.+(float)(rand()%50)/100.0;
+            step[i] = 12+rand()%12;
+          }
+        }
+      }
+    }
   }
 
   return region;
