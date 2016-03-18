@@ -25,6 +25,8 @@ class Options{
     string fddb_dir;
     /* \breif a text file for resume training status */
     string tmpfile;
+    /* \breif Init Neg Samples */
+    string initNeg
     /* \breif depth of a stage */
     int treeLevel;
     /* \breif max number of stages */

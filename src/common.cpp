@@ -12,6 +12,7 @@ Options::Options(){ //default value
   outFile = "../result";
   fddb_dir = "../data/fddb";
   tmpfile = "../data/tmpFaceDB.txt";
+  initNeg = "../data/hd.txt"
   trimFrac = 0.05;
   minLeafFrac = 0.01;
   minLeaf = 100;

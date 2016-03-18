@@ -162,21 +162,10 @@ void DataSet::LoadNegativeDataSet(const string& negative, int pos_num, int stage
 }
 void DataSet::MoreNeg(const int n){
   const Options& opt = Options::GetInstance();
-  int pool_size = omp_get_max_threads();
-  vector<Mat> region_pool(pool_size);
-  int num = 0;
-
-  int all = 0;
-
-  while(num<n){
-    #pragma omp parallel for
-    for(int i = 0;i<pool_size;i++){
-      region_pool[i] = NextImage(i);
-    }
-    for (int i = 0; i < pool_size; i++) {
-      imgs.push_back(region_pool[i].clone());
-      num ++;
-    }
+  file = fopen(opt.initNeg.c_str(), "r");
+  while (fscanf(file, "%s", buff) > 0) {
+    Mat img = imread(buff,,CV_LOAD_IMAGE_GRAYSCALE);
+    imgs.push_back(img);
   }
 }
 
