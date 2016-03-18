@@ -6,7 +6,7 @@ Options::Options(){ //default value
   maxNumWeaks = 1000;
   minDR = 1.0;
   maxFAR = 0;
-  minSamples = 100000;
+  minSamples = 10;
   faceDBFile = "../data/FaceDB.txt";
   nonfaceDBFile = "../data/NonfaceDB.txt";
   outFile = "../result";

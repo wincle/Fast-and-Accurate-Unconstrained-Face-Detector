@@ -231,7 +231,6 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
     neg.Remove(negPassIndex);
     MiningNeg(nPos,neg);
    
-
     nonfaceFea = neg.ExtractPixel();
     pos.CalcWeight(1,opt.maxWeight);
     neg.CalcWeight(-1,opt.maxWeight);
@@ -447,6 +446,7 @@ void GAB::MiningNeg(int n,DataSet& neg){
       all++;
     }
   }
+  neg.size = n;
   rate = ((double)(need))/(double)all;
   printf("mining success rate %lf\n",rate);
 }

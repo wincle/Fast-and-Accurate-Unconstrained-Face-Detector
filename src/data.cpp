@@ -10,14 +10,15 @@ DataSet::DataSet(){
   const Options& opt = Options::GetInstance();
 
   int i;
-  for(i=0;i<16;i++);
+  for(i=0;i<16;i++){
+    x[i]=0;
+    y[i]=0;
+    factor[i]=1.2;
+    step[i]=12;
+    tranType[i]=0;
+    win[i]=opt.objSize;
     current_id[i] = i;
-  memset(x, 0, sizeof(int)*16);
-  memset(y, 0, sizeof(int)*16);
-  memset(factor, 1.2, sizeof(float)*16);
-  memset(step, 12, sizeof(int)*16);
-  memset(win, opt.objSize, sizeof(int)*16);
-  memset(tranType, 0, sizeof(int)*16);
+  }
   numPixels = opt.objSize * opt.objSize;
   feaDims = numPixels * (numPixels - 1) / 2;
 
@@ -230,10 +231,10 @@ Mat DataSet::NextImage(int i) {
 
   //Next State
   x[i]+=step[i];
-  if(x[i]>width){
+  if(x[i]>(width-win[i])){
     x[i] = 0;
     y[i]+=step[i];
-    if(y[i]>height){
+    if(y[i]>(height-win[i])){
       y[i] = 0;
       win[i]*=factor[i];
       if(win[i]>width || win[i]>height){
@@ -250,6 +251,7 @@ Mat DataSet::NextImage(int i) {
             NegImgs[i] = tmg.clone();
             srand(time(0)+i);
             factor[i] = 1.+(float)(rand()%50)/100.0;
+            printf("%f should at [1,1.5]\n",factor[i]);
             step[i] = 12+rand()%12;
           }
         }
@@ -281,6 +283,7 @@ void DataSet::Remove(vector<int> PassIndex){
 
   memcpy(Fx,tmpFx,(size+omp_get_max_threads())*sizeof(float));
   imgs = tmpImgs;
+  size = passNum;
   delete []tmpFx;
 }
 
