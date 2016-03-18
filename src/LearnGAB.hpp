@@ -121,6 +121,13 @@ class GAB{
      * \param path  file path of model
      */
     void LoadModel(string path);
+    /*
+     * \breif Draw rect in a image
+     *
+     * \param img  the image need to be draw
+     * \param rects  the box
+     */
+    cv::Mat Draw(cv::Mat& img, cv::Rect& rects);
   public:
     /* \breif indicate how many stages the dector have */
     int stages;

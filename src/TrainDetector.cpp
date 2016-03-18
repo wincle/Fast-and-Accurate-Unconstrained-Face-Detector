@@ -56,3 +56,37 @@ void TrainDetector::FddbDetect(){
     fclose(fout);
   }
 }
+
+void TrainDetector::Live() {
+  Options& opt = Options::GetInstance();
+
+  VideoCapture cap(0);
+  if (!cap.isOpened()) {
+    printf("Can not open Camera, Please Check it!");
+    return;
+  }
+
+  GAB Gab;
+  Gab.LoadModel(opt.outFile);
+
+  while (true) {
+    Mat frame;
+    Mat gray;
+    cap >> frame;
+
+    cvtColor(frame, gray, CV_BGR2GRAY);
+    vector<Rect> rects;
+    vector<float> scores;
+    vector<int> index;
+    index = Gab.DetectFace(gray,rects,scores);
+
+    for (int i = 0; i < index.size(); i++) {
+      frame = Gab.Draw(frame, rects[index[i]]);
+    }
+    cv::imshow("live", frame);
+    int key = cv::waitKey(30);
+    if (key == 27) {
+      break;
+    }
+  }
+}

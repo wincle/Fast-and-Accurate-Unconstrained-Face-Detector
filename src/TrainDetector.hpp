@@ -14,4 +14,8 @@ class TrainDetector{
      * \breif Detect For FDDB
      */
     void FddbDetect();
+    /*
+     * \breif Detect face from camera
+     */
+    void Live();
 };
