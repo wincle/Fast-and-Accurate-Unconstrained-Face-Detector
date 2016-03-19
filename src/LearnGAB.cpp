@@ -421,7 +421,7 @@ void GAB::MiningNeg(int n,DataSet& neg){
   const Options& opt = Options::GetInstance();
   int pool_size = omp_get_max_threads();
   vector<Mat> region_pool(pool_size);
-  int st = neg.size;
+  int st = neg.imgs.size();
   int all = 0;
   int need = n - st;
   double rate;
@@ -440,6 +440,11 @@ void GAB::MiningNeg(int n,DataSet& neg){
         {
           neg.imgs.push_back(region_pool[i].clone());
           neg.Fx[st]=score;
+          if(opt.generate_hd){
+            char di[256];
+            sprintf(di,"../data/hd/%d.jpg",st);
+            imwrite(di,region_pool[i].clone());
+          }
           st++;
         }
       }

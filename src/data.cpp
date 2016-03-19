@@ -162,18 +162,22 @@ void DataSet::LoadNegativeDataSet(const string& negative, int pos_num, int stage
 }
 void DataSet::MoreNeg(const int n){
   const Options& opt = Options::GetInstance();
-  file = fopen(opt.initNeg.c_str(), "r");
+  FILE *file = fopen(opt.initNeg.c_str(), "r");
+  int count = 0;
+  char buff[300];
   while (fscanf(file, "%s", buff) > 0) {
-    Mat img = imread(buff,,CV_LOAD_IMAGE_GRAYSCALE);
+    Mat img = imread(buff,CV_LOAD_IMAGE_GRAYSCALE);
     imgs.push_back(img);
+    count ++;
   }
+  if(count != n)
+    printf("hd imgs not enough!\n");
 }
 
 Mat DataSet::NextImage(int i) {
   const Options& opt = Options::GetInstance();
 
-  int id = current_id[i];
-  Mat img = NegImgs[id];
+  Mat img = NegImgs[i];
 
   const int width = img.cols;
   const int height = img.rows;

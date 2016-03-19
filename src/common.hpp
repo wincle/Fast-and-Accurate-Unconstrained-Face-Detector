@@ -26,7 +26,7 @@ class Options{
     /* \breif a text file for resume training status */
     string tmpfile;
     /* \breif Init Neg Samples */
-    string initNeg
+    string initNeg;
     /* \breif depth of a stage */
     int treeLevel;
     /* \breif max number of stages */
@@ -49,6 +49,8 @@ class Options{
     bool augment;
     /* \breif step of stages to save the model */
     int saveStep;
+    /* \breif generate init neg if need */
+    bool generate_hd;
 
   private:
     Options();
