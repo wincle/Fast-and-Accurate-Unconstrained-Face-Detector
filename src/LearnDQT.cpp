@@ -31,7 +31,7 @@ DQT::DQT(){
 float DQT::Learn(cv::Mat posX,cv::Mat negX, float pPosW[], float pNegW[], vector<int> posIndex,vector<int> negIndex, int minLeaf, vector<int> &feaId, vector<int> &leftChild, vector<int> &rightChild, vector< vector<unsigned char> > &cutpoint, vector<float> &fit){
   const Options& opt = Options::GetInstance();
   int treeLevel = opt.treeLevel;
-  int numThreads = omp_get_num_procs();
+  int numThreads = opt.numThreads;
   int nTotalPos = posX.cols;
   int nTotalNeg = negX.cols;
   int nPos = posIndex.size();

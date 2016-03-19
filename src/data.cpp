@@ -10,7 +10,7 @@ DataSet::DataSet(){
   const Options& opt = Options::GetInstance();
 
   int i;
-  for(i=0;i<16;i++){
+  for(i=0;i<opt.numThreads;i++){
     x[i]=0;
     y[i]=0;
     factor[i]=1.2;
@@ -28,10 +28,10 @@ DataSet::DataSet(){
 void DataSet::LoadDataSet(DataSet& pos, DataSet& neg, int stages){
   const Options& opt = Options::GetInstance();
   printf("Loading Pos data\n");
-//  pos.LoadPositiveDataSet(opt.faceDBFile,stages);
+  pos.LoadPositiveDataSet(opt.faceDBFile,stages);
   printf("Pos data finish %d\n",pos.size);
   printf("Loading Neg data\n");
-  neg.LoadNegativeDataSet(opt.nonfaceDBFile,214860,stages);
+  neg.LoadNegativeDataSet(opt.nonfaceDBFile,pos.size,stages);
   printf("Neg data finish %d\n",neg.size);
 }
 void DataSet::LoadPositiveDataSet(const string& positive,int stages){
@@ -159,26 +159,20 @@ void DataSet::LoadNegativeDataSet(const string& negative, int pos_num, int stage
     NegImgs.push_back(img.clone());
   }
   if(stages == 0)
-    MoreNeg(ceil(size*opt.negRatio));
+    MoreNeg(size);
 }
 void DataSet::MoreNeg(const int n){
   const Options& opt = Options::GetInstance();
-  int pool_size = omp_get_max_threads();
-  vector<Mat> region_pool(pool_size);
-  int num = 0;
-
-  int all = 0;
-
-  while(num<n){
-    #pragma omp parallel for
-    for(int i = 0;i<pool_size;i++){
-      region_pool[i] = NextImage(i);
-    }
-    for (int i = 0; i < pool_size; i++) {
-      imgs.push_back(region_pool[i].clone());
-      num ++;
-    }
+  FILE *file = fopen(opt.initNeg.c_str(), "r");
+  int count = 0;
+  char buff[300];
+  while (fscanf(file, "%s", buff) > 0) {
+    Mat img = imread(buff,CV_LOAD_IMAGE_GRAYSCALE);
+    imgs.push_back(img);
+    count ++;
   }
+  if(count != n)
+    printf("hd imgs not enough!\n");
 }
 
 Mat DataSet::NextImage(int i) {
@@ -242,7 +236,7 @@ Mat DataSet::NextImage(int i) {
         tranType[i]++;
         if(tranType[i]>7){
           tranType[i] = 0;
-          current_id[i]+=16;
+          current_id[i]+=opt.numThreads;
           if(current_id[i]>size){
             current_id[i]=i;
             Mat tmg = imread(list[current_id[i]],CV_LOAD_IMAGE_GRAYSCALE);
@@ -284,6 +278,7 @@ void DataSet::Remove(vector<int> PassIndex){
 
   memcpy(Fx,tmpFx,(size+omp_get_max_threads())*sizeof(float));
   imgs = tmpImgs;
+  size = passNum;
   delete []tmpFx;
 }
 

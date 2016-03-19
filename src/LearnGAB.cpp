@@ -47,8 +47,7 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
   timeval start, end;
   timeval Tstart, Tend;
   float time = 0;
- // int nPos = pos.size;
-  int nPos = 0;
+  int nPos = pos.size;
   int nNeg = neg.size;
 
   float _FAR=1.0;
@@ -59,7 +58,7 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
 
   if(stages!=0){
     int fail = 0;
-/*    #pragma omp parallel for
+    #pragma omp parallel for
     for (int i = 0; i < nPos; i++) {
       float score = 0;
       if(NPDClassify(pos.imgs[i].clone(),score)){
@@ -73,9 +72,9 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
       printf("you should't change pos data! %d \n",fail);
       return;
     }
-*/
-    MiningNeg(0,neg);
-    printf("finish");
+
+    MiningNeg(nPos,neg);
+
     if(neg.imgs.size()<pos.imgs.size()){
       printf("neg not enough, change neg rate or add neg Imgs %d %d\n",pos.imgs.size(),neg.imgs.size());
       return;
@@ -95,7 +94,6 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
   for (int t = stages;t<opt.maxNumWeaks;t++){
     printf("start training %d stages \n",t);
     gettimeofday(&start,NULL);
-
 
     vector<int> posIndex;
     vector<int> negIndex;
@@ -226,15 +224,13 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
     }
 
 
-    SaveIter(feaId,leftChild,rightChild,cutpoint,fit,threshold,far,depth);
+    SaveIter(feaId,leftChild,rightChild,cutpoint,fit,threshold);
 
     gettimeofday(&Tstart,NULL); 
 
     neg.Remove(negPassIndex);
-    MiningNeg(negPassIndex.size(),neg);
-    if(neg.imgs.size()<pos.imgs.size())
-      break;
-
+    MiningNeg(nPos,neg);
+   
     nonfaceFea = neg.ExtractPixel();
     pos.CalcWeight(1,opt.maxWeight);
     neg.CalcWeight(-1,opt.maxWeight);
@@ -253,7 +249,7 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
 
 }
 
-void GAB::SaveIter(vector<int> feaId, vector<int> leftChild, vector<int> rightChild, vector< vector<unsigned char> > cutpoint, vector<float> fit, float threshold, float far, int depth){
+void GAB::SaveIter(vector<int> feaId, vector<int> leftChild, vector<int> rightChild, vector< vector<unsigned char> > cutpoint, vector<float> fit, float threshold){
   const Options& opt = Options::GetInstance();
 
   feaIds.push_back(feaId); 
@@ -261,9 +257,7 @@ void GAB::SaveIter(vector<int> feaId, vector<int> leftChild, vector<int> rightCh
   rightChilds.push_back(rightChild);
   cutpoints.push_back(cutpoint);
   fits.push_back(fit);
-  depths.push_back(depth);
   thresholds.push_back(threshold);
-  fars.push_back(far);
   stages++;
 
 }
@@ -310,8 +304,6 @@ void GAB::Save(){
     fwrite(&size,sizeof(int),1,file);
     fwrite(fit,sizeof(float),fits[i].size(),file);
     delete []fit;
-    int depth = depths[i];
-    fwrite(&depth,sizeof(int),1,file);
     float threshold = thresholds[i];
     fwrite(&threshold,sizeof(float),1,file);
 
@@ -425,11 +417,11 @@ void GAB::GetPoints(int feaid, int *x, int *y){
   *y = rpoint;
 }
 
-void GAB::MiningNeg(int st,DataSet& neg){
+void GAB::MiningNeg(int n,DataSet& neg){
   const Options& opt = Options::GetInstance();
   int pool_size = omp_get_max_threads();
   vector<Mat> region_pool(pool_size);
-  int n = neg.size;
+  int st = neg.imgs.size();
   int all = 0;
   int need = n - st;
   double rate;
@@ -448,16 +440,18 @@ void GAB::MiningNeg(int st,DataSet& neg){
         {
           neg.imgs.push_back(region_pool[i].clone());
           neg.Fx[st]=score;
-          printf("%d\n",st);
-          char di[256];
-          sprintf(di,"hd/%d.jpg",st);
-          imwrite(di,region_pool[i].clone());
+          if(opt.generate_hd){
+            char di[256];
+            sprintf(di,"../data/hd/%d.jpg",st);
+            imwrite(di,region_pool[i].clone());
+          }
           st++;
         }
       }
       all++;
     }
   }
+  neg.size = n;
   rate = ((double)(need))/(double)all;
   printf("mining success rate %lf\n",rate);
 }
@@ -476,7 +470,6 @@ void GAB::LoadModel(string path){
     vector<int> feaId, leftChild, rightChild;
     vector< vector<unsigned char> > cutpoint;
     vector<float> fit;
-    int depth;
     float threshold;
 
     fread(&size,sizeof(int),1,file);
@@ -485,7 +478,6 @@ void GAB::LoadModel(string path){
     for(int i = 0;i<size;i++){
       feaId.push_back(_feaId[i]);
     }
-    printf("\n");
     unsigned char *_cutpoint = new unsigned char[size*2];
     fread(_cutpoint,sizeof(unsigned char),2*size,file);
     for(int i =0;i<size;i++){
@@ -509,7 +501,6 @@ void GAB::LoadModel(string path){
     for(int i =0;i<size;i++){
       fit.push_back(_fit[i]);
     }
-    fread(&depth,sizeof(int),1,file);
     fread(&threshold,sizeof(float),1,file);
 
     feaIds.push_back(feaId);
@@ -517,7 +508,6 @@ void GAB::LoadModel(string path){
     rightChilds.push_back(rightChild);
     cutpoints.push_back(cutpoint);
     fits.push_back(fit);
-    depths.push_back(depth);
     thresholds.push_back(threshold);
 
     delete []_feaId;
@@ -562,7 +552,6 @@ vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
   picked = Nms(rects,scores,0.3);
   return picked;
 }
-
 
 vector<int> GAB::Nms(vector<Rect>& rects, vector<float>& scores, float overlap) {
   const int n = rects.size();

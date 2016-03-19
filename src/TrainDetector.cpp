@@ -56,7 +56,8 @@ void TrainDetector::FddbDetect(){
     fclose(fout);
   }
 }
-void live() {
+
+void TrainDetector::Live() {
   Options& opt = Options::GetInstance();
 
   VideoCapture cap(0);

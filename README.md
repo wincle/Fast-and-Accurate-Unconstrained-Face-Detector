@@ -4,12 +4,8 @@ The C++ implementation of NPD
 
 Notice:The code is being Test!
 
-The result is trained by 200k pos data and the template is 24*24 , the stages num is 100
+The result is trained by 200k pos data and the template is 24*24
 
-# Difference with Matlab Code
-
-- Neg Samples Mining in every Iter.
-- Always training in LearGAB , don't jump out to TrainDector as Matlab Code.
 
 # How to use
 - you should mkdir data first
@@ -38,6 +34,7 @@ The config is in src/common.cpp
 #Contact with me
 
 You can join the Google group NPD_C_Group to talk with each other.
+
 https://groups.google.com/forum/#!forum/npd_c_group
 
 #License
