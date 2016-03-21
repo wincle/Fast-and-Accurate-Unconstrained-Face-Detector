@@ -419,7 +419,7 @@ void GAB::GetPoints(int feaid, int *x, int *y){
 
 void GAB::MiningNeg(int n,DataSet& neg){
   const Options& opt = Options::GetInstance();
-  int pool_size = omp_get_max_threads();
+  int pool_size = opt.numThreads;
   vector<Mat> region_pool(pool_size);
   int st = neg.imgs.size();
   int all = 0;
@@ -523,8 +523,8 @@ vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
   const Options& opt = Options::GetInstance();
   int width = img.cols;
   int height = img.rows;
-  int win = opt.objSize;
-  float factor = 1.2;
+  int win = 20;
+  float factor = 1.1;
   int x = 0;
   int y = 0;
   Mat crop_img;

@@ -152,9 +152,9 @@ void DataSet::LoadNegativeDataSet(const string& negative, int pos_num, int stage
   }
   size = pos_num;
   random_shuffle(list.begin(),list.end());
-  imgs.reserve(size + omp_get_max_threads());
+  imgs.reserve(size + opt.numThreads);
   initWeights();
-  for(int k = 0; k<omp_get_max_threads() ; k++){
+  for(int k = 0; k<opt.numThreads ; k++){
     Mat img = imread(list[k],CV_LOAD_IMAGE_GRAYSCALE);
     NegImgs.push_back(img.clone());
   }
@@ -264,11 +264,12 @@ void DataSet::ImgClear(){
 }
 
 void DataSet::Remove(vector<int> PassIndex){
+  const Options& opt = Options::GetInstance();
   int passNum = PassIndex.size();
 
   vector<Mat> tmpImgs;
-  float* tmpFx = new float[size+omp_get_max_threads()];
-  for(int i = 0;i<size+omp_get_max_threads();i++)
+  float* tmpFx = new float[size+opt.numThreads];
+  for(int i = 0;i<size+opt.numThreads;i++)
     tmpFx[i] = 0;
 
   for(int i = 0;i<passNum;i++){
@@ -276,7 +277,7 @@ void DataSet::Remove(vector<int> PassIndex){
     tmpFx[i] = Fx[PassIndex[i]];
   }
 
-  memcpy(Fx,tmpFx,(size+omp_get_max_threads())*sizeof(float));
+  memcpy(Fx,tmpFx,(size+opt.numThreads)*sizeof(float));
   imgs = tmpImgs;
   size = passNum;
   delete []tmpFx;
@@ -284,7 +285,7 @@ void DataSet::Remove(vector<int> PassIndex){
 
 Mat DataSet::ExtractPixel(){
   Options& opt = Options::GetInstance();
-  int numThreads = omp_get_num_procs();
+  int numThreads = opt.numThreads;
   omp_set_num_threads(numThreads);
 
   size_t height = opt.objSize;
@@ -313,10 +314,11 @@ Mat DataSet::ExtractPixel(){
 }
 
 void DataSet::initWeights(){
+  Options& opt = Options::GetInstance();
   W = new float[size];
   for(int i = 0;i<size;i++)
     W[i]=1./size;
-  Fx = new float[size+omp_get_max_threads()];
+  Fx = new float[size+opt.numThreads];
   for(int i = 0;i<size;i++)
     Fx[i]=0;
 }
