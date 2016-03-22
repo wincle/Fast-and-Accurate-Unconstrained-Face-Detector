@@ -38,8 +38,6 @@ GAB::GAB(){
     }
   } 
 
-  minRate = 0.001;
-
 }
 
 void GAB::LearnGAB(DataSet& pos, DataSet& neg){
@@ -92,6 +90,7 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
   printf("Extract neg feature finish\n");
 
   for (int t = stages;t<opt.maxNumWeaks;t++){
+    nNeg  = neg.size;
     printf("start training %d stages \n",t);
     gettimeofday(&start,NULL);
 
@@ -229,7 +228,8 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
     gettimeofday(&Tstart,NULL); 
 
     neg.Remove(negPassIndex);
-    MiningNeg(nPos,neg);
+    if(neg.size<opt.minSamples)
+      MiningNeg(nPos,neg);
    
     nonfaceFea = neg.ExtractPixel();
     pos.CalcWeight(1,opt.maxWeight);
@@ -438,6 +438,7 @@ void GAB::MiningNeg(int n,DataSet& neg){
       if(NPDClassify(region_pool[i].clone(),score)){
         #pragma omp critical 
         {
+          printf("%d get\n",st);
           neg.imgs.push_back(region_pool[i].clone());
           neg.Fx[st]=score;
           if(opt.generate_hd){
@@ -597,6 +598,6 @@ vector<int> GAB::Nms(vector<Rect>& rects, vector<float>& scores, float overlap) 
 
 Mat GAB::Draw(Mat& img, Rect& rects){
   Mat img_ = img.clone();
-  rectangle(img,rects,Scalar(0, 0, 255), 2);
+  rectangle(img_,rects,Scalar(0, 0, 255), 2);
   return img_;
 }

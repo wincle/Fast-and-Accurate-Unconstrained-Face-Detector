@@ -13,9 +13,10 @@ Options::Options(){ //default value
   fddb_dir = "../data/fddb";
   tmpfile = "../data/tmpFaceDB.txt";
   initNeg = "../data/hd.txt";
-  trimFrac = 0.05;
+  trimFrac = 0.005;
   minLeafFrac = 0.01;
   minLeaf = 100;
+  minSamples = 100000;
   maxWeight = 100;
   augment = true;
   saveStep = 10;

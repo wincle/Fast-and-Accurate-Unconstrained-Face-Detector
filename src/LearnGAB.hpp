@@ -140,8 +140,6 @@ class GAB{
     vector<int> rpoints;
     /* \breif A feature map used for speed up calculate feature */
     cv::Mat ppNpdTable;
-    /* \breif the rate to control mining speed */
-    double minRate;
   public:
     /* \breif model template size */
     int DetectSize;

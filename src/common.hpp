@@ -45,6 +45,8 @@ class Options{
     int minLeaf;
     /* \breif factor to decide how many samples should be filter befor training a stage */
     double trimFrac;
+    /* \breif minimum samples required */
+    int minSamples;
     /* \breif data augment or not */
     bool augment;
     /* \breif step of stages to save the model */

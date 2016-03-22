@@ -13,8 +13,8 @@ DataSet::DataSet(){
   for(i=0;i<opt.numThreads;i++){
     x[i]=0;
     y[i]=0;
-    factor[i]=1.2;
-    step[i]=12;
+    factor[i]=1.1;
+    step[i]=18;
     tranType[i]=0;
     win[i]=opt.objSize;
     current_id[i] = i;
@@ -237,7 +237,7 @@ Mat DataSet::NextImage(int i) {
         if(tranType[i]>7){
           tranType[i] = 0;
           current_id[i]+=opt.numThreads;
-          if(current_id[i]>size){
+          if(current_id[i]>list.size()){
             current_id[i]=i;
             Mat tmg = imread(list[current_id[i]],CV_LOAD_IMAGE_GRAYSCALE);
             NegImgs[i] = tmg.clone();
