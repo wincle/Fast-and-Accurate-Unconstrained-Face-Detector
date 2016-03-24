@@ -55,6 +55,9 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
   float *w = new float[nPos];
 
   if(stages!=0){
+    
+    MiningNeg(nPos,neg);
+
     int fail = 0;
     #pragma omp parallel for
     for (int i = 0; i < nPos; i++) {
@@ -71,7 +74,6 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
       return;
     }
 
-    MiningNeg(nPos,neg);
 
     if(neg.imgs.size()<pos.imgs.size()){
       printf("neg not enough, change neg rate or add neg Imgs %d %d\n",pos.imgs.size(),neg.imgs.size());
@@ -427,16 +429,16 @@ void GAB::MiningNeg(int n,DataSet& neg){
   double rate;
 
   while(st<n){
-    #pragma omp parallel for
+//    #pragma omp parallel for
     for(int i = 0;i<pool_size;i++){
       region_pool[i] = neg.NextImage(i);
     }
 
-    #pragma omp parallel for
+//    #pragma omp parallel for
     for (int i = 0; i < pool_size; i++) {
       float score = 0;
       if(NPDClassify(region_pool[i].clone(),score)){
-        #pragma omp critical 
+//        #pragma omp critical 
         {
           printf("%d get\n",st);
           neg.imgs.push_back(region_pool[i].clone());
@@ -531,6 +533,8 @@ vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
   Mat crop_img;
   while(win <= width && win <= height){
     int step = win * 0.1;
+    if(win>40)
+      step = win*0.05;
     while (y<=(height-win)){
       while (x<=(width-win)) {
         float score;
