@@ -13,8 +13,9 @@ DataSet::DataSet(){
   for(i=0;i<opt.numThreads;i++){
     x[i]=0;
     y[i]=0;
-    factor[i]=1.1;
-    step[i]=18;
+    srand(time(0)+i);
+    factor[i] = 1.+(float)(rand()%50)/100.0;
+    step[i] = 12+rand()%12;
     tranType[i]=0;
     win[i]=opt.objSize;
     current_id[i] = i;

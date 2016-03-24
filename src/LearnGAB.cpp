@@ -56,8 +56,6 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
 
   if(stages!=0){
     
-    MiningNeg(nPos,neg);
-
     int fail = 0;
     #pragma omp parallel for
     for (int i = 0; i < nPos; i++) {
@@ -75,6 +73,7 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
     }
 
 
+    MiningNeg(nPos,neg);
     if(neg.imgs.size()<pos.imgs.size()){
       printf("neg not enough, change neg rate or add neg Imgs %d %d\n",pos.imgs.size(),neg.imgs.size());
       return;
@@ -429,16 +428,16 @@ void GAB::MiningNeg(int n,DataSet& neg){
   double rate;
 
   while(st<n){
-//    #pragma omp parallel for
+    #pragma omp parallel for
     for(int i = 0;i<pool_size;i++){
       region_pool[i] = neg.NextImage(i);
     }
 
-//    #pragma omp parallel for
+    #pragma omp parallel for
     for (int i = 0; i < pool_size; i++) {
       float score = 0;
       if(NPDClassify(region_pool[i].clone(),score)){
-//        #pragma omp critical 
+        #pragma omp critical 
         {
           printf("%d get\n",st);
           neg.imgs.push_back(region_pool[i].clone());
@@ -577,6 +576,7 @@ vector<int> GAB::Nms(vector<Rect>& rects, vector<float>& scores, float overlap) 
     picked_n++;
     for (ScoreMapper::iterator it = map.begin(); it != map.end();) {
       int idx = it->second;
+      float tmpScore = it->first;
       float x1 = max(rects[idx].x, rects[last].x);
       float y1 = max(rects[idx].y, rects[last].y);
       float x2 = min(rects[idx].x + rects[idx].width, rects[last].x + rects[last].width);
@@ -586,6 +586,7 @@ vector<int> GAB::Nms(vector<Rect>& rects, vector<float>& scores, float overlap) 
       float ov = w*h / (areas[idx] + areas[last] - w*h);
       if (ov > overlap) {
         ScoreMapper::iterator tmp = it;
+        scores[last]+= tmpScore;
         tmp++;
         map.erase(it);
         it = tmp;
