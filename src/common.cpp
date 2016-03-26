@@ -21,4 +21,5 @@ Options::Options(){ //default value
   augment = true;
   saveStep = 10;
   generate_hd = false;
+  enDelta = 0.1;
 }

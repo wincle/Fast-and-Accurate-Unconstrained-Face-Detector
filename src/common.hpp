@@ -53,6 +53,8 @@ class Options{
     int saveStep;
     /* \breif generate init neg if need */
     bool generate_hd;
+    /* \breif use for resize box */
+    float enDelta;
 
   private:
     Options();

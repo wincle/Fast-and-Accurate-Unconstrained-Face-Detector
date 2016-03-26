@@ -155,13 +155,39 @@ class GAB{
     vector<int> DetectFace(cv::Mat img,vector<cv::Rect>& rects, vector<float>& scores);
     /*
      * \breif nms Non-maximum suppression
-     * the algorithm is from https://github.com/ShaoqingRen/SPP_net/blob/master/nms%2Fnms_mex.cpp
+     * the Nms algorithm result concerned score of areas
      *  
      * \param rects     area of faces
      * \param scores    score of faces
+     * \param Srect size of rects
      * \param overlap   overlap threshold
+     * \param img  get size of origin img
      * \return          picked index
      */
-    vector<int> Nms(vector<cv::Rect>& rects, vector<float>& scores, float overlap);
+    vector<int> Nms(vector<cv::Rect>& rects, vector<float>& scores, vector<int>& Srect, float overlap, cv::Mat img);
+    /*
+     * \breif function for Partation areas
+     * From Predicate mat get a paration result
+     * 
+     * \param predicate  The matrix marked cross areas
+     * \param label  The vector marked classification label
+     * return number of classfication
+     */
+    int Partation(cv::Mat predicate,vector<int>& label);
+    /*
+     * \breif Find classfication area parent
+     *
+     * \param parent  parent vector
+     * \param x  current node
+     */
+    int Find(vector<int>& parent,int x);
+    /*
+     * \breif Compute score
+     * y = log(1+exp(x));
+     *
+     * \param scores  score vector
+     * \param index  score index
+     */
+    vector<float> Logistic(vector<float> scores ,vector<int> index);
 };
 #endif
