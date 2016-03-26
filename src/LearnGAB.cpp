@@ -537,8 +537,8 @@ vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
   const Options& opt = Options::GetInstance();
   int width = img.cols;
   int height = img.rows;
-  int win = 20;
-  float factor = 1.1;
+  int win = 24;
+  float factor = 1.2;
   int x = 0;
   int y = 0;
   Mat crop_img;
@@ -566,11 +566,11 @@ vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
   }
   vector<int> picked;
   vector<int> Srect;
-  picked = Nms(rects,scores,Srect,0.3,img);
+  picked = Nms(rects,scores,Srect,0.5,img);
 
   int imgWidth = img.cols;
   int imgHeight = img.rows;
-
+/*
   for(int i = 0;i<picked.size();i++){
     int idx = picked[i];
     int delta = floor(Srect[idx]*opt.enDelta);
@@ -584,7 +584,7 @@ vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
     rects[idx].width = x1-x0 + 1;
     rects[idx].height = y1-y0 + 1;
   }
-  
+ */ 
   
   return picked;
 }
