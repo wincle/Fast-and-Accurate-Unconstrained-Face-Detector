@@ -570,7 +570,7 @@ vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
 
   int imgWidth = img.cols;
   int imgHeight = img.rows;
-/*
+
   for(int i = 0;i<picked.size();i++){
     int idx = picked[i];
     int delta = floor(Srect[idx]*opt.enDelta);
@@ -584,7 +584,6 @@ vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
     rects[idx].width = x1-x0 + 1;
     rects[idx].height = y1-y0 + 1;
   }
- */ 
   
   return picked;
 }
