@@ -28,7 +28,10 @@ void TrainDetector::FddbDetect(){
   GAB Gab;
   Gab.LoadModel(opt.outFile);
 
-  #pragma omp parallel for
+  timeval start, end;
+  float time = 0;
+
+//  #pragma omp parallel for
   for(int i = 1;i<=10;i++){
     char fddb[300];
     char fddb_out[300];
@@ -44,14 +47,20 @@ void TrainDetector::FddbDetect(){
       vector<Rect> rects;
       vector<float> scores;
       vector<int> index;
+      gettimeofday(&start,NULL);
       index = Gab.DetectFace(img,rects,scores);
+      gettimeofday(&end,NULL);
+      float t = 1000 * (end.tv_sec-start.tv_sec)+ (end.tv_usec-start.tv_usec)/1000;
+      time += t;
       printf("%s\n%d\n",path,index.size());
+      printf("use time:%f\n",t);
       fprintf(fout,"%s\n%d\n",path,index.size());
       for(int i = 0;i < index.size(); i++){
         printf("%d %d %d %d %lf\n", rects[index[i]].x, rects[index[i]].y, rects[index[i]].width, rects[index[i]].height, scores[index[i]]);
         fprintf(fout, "%d %d %d %d %lf\n", rects[index[i]].x, rects[index[i]].y, rects[index[i]].width, rects[index[i]].height, scores[index[i]]);
       }
     }
+    printf("all time:%f\n",time);
     fclose(fin);
     fclose(fout);
   }

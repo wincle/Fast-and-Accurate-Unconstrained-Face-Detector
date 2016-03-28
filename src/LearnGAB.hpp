@@ -81,8 +81,9 @@ class GAB{
      *
      * param test  the region to be test
      * param score  the score finally it got
+     * param sIndex  the index of winSize
      */
-    bool NPDClassify(cv::Mat test,float &score);
+    bool NPDClassify(cv::Mat test,float &score,int sIndex);
     /*
      * \breif Get the coordinates by feature id
      * the feature number is calculate by (objSize*objSize)*(objSize*objSize-1)/2
@@ -132,10 +133,15 @@ class GAB{
     /* \breif indicate how many stages the dector have */
     int stages;
     /* \breif vectors contain the model */
-    vector< vector<int> > feaIds, leftChilds, rightChilds;
-    vector< vector< vector<unsigned char> > > cutpoints;
-    vector< vector<float> > fits;
+    vector<int> treeIndex;
+    vector<int> feaIds, leftChilds, rightChilds;
+    vector<unsigned char> cutpoints;
+    vector<float> fits;
     vector<float> thresholds;
+    int numBranchNodes;
+    /* \breif save the points of feature id */
+    vector< vector<int> > points1x,points2x,points1y,points2y;
+    /* \breif vector contain point-feature map */
     vector<int> lpoints;
     vector<int> rpoints;
     /* \breif A feature map used for speed up calculate feature */

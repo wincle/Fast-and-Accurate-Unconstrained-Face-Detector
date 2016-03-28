@@ -10,17 +10,7 @@
 
 using namespace cv;
 
-float getticks()
-{
-  struct timespec ts;
-
-  if(clock_gettime(CLOCK_MONOTONIC, &ts) < 0)
-    return -1.0f;
-
-  return ts.tv_sec*1000 + 1e-6f*ts.tv_nsec;
-}
-
-float all=0;
+int pWinSize[]={24,29,35,41,50,60,72,86,103,124,149,178,214,257,308,370,444,532,639,767,920,1104,1325,1590,1908,2290,2747,3297,3956};
 
 GAB::GAB(){
   const Options& opt = Options::GetInstance();
@@ -50,6 +40,12 @@ GAB::GAB(){
     }
   } 
 
+
+  points1x.resize(29);
+  points1y.resize(29);
+  points2x.resize(29);
+  points2y.resize(29);
+
 }
 
 void GAB::LearnGAB(DataSet& pos, DataSet& neg){
@@ -72,7 +68,7 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
     #pragma omp parallel for
     for (int i = 0; i < nPos; i++) {
       float score = 0;
-      if(NPDClassify(pos.imgs[i].clone(),score)){
+      if(NPDClassify(pos.imgs[i].clone(),score,0)){
           pos.Fx[i]=score;
       }
       else{
@@ -265,14 +261,43 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
 void GAB::SaveIter(vector<int> feaId, vector<int> leftChild, vector<int> rightChild, vector< vector<unsigned char> > cutpoint, vector<float> fit, float threshold){
   const Options& opt = Options::GetInstance();
 
-  feaIds.push_back(feaId); 
-  leftChilds.push_back(leftChild); 
-  rightChilds.push_back(rightChild);
-  cutpoints.push_back(cutpoint);
-  fits.push_back(fit);
+  int root = 0;
+  if(stages == 0)
+    treeIndex.push_back(0);
+  else
+    root = treeIndex[stages];
+  root += feaId.size();
+  treeIndex.push_back(root);
+
+  for(int i = 0;i<feaId.size();i++){
+    feaIds.push_back(feaId[i]);
+    for(int j = 0;j<29;j++){
+      int x1,y1,x2,y2;
+      GetPoints(feaId[i],&x1,&y1,&x2,&y2);
+      float factor = (float)pWinSize[j]/(float)opt.objSize;
+      points1x[j].push_back(x1*factor);
+      points1y[j].push_back(y1*factor);
+      points2x[j].push_back(x2*factor);
+      points2y[j].push_back(y2*factor);
+    }
+    if(leftChild[i]<0)
+      leftChild[i] -= (treeIndex[stages]+stages);
+    else
+      leftChild[i] += treeIndex[stages];
+    leftChilds.push_back(leftChild[i]); 
+    if(rightChild[i]<0)
+      rightChild[i] -= (treeIndex[stages]+stages);
+    else
+      rightChild[i] += treeIndex[stages];
+    rightChilds.push_back(rightChild[i]);
+    cutpoints.push_back(cutpoint[i][0]);
+    cutpoints.push_back(cutpoint[i][1]);
+  }
+  for(int i = 0;i<fit.size();i++)
+    fits.push_back(fit[i]);
   thresholds.push_back(threshold);
   stages++;
-
+  
 }
 void GAB::Save(){
   const Options& opt = Options::GetInstance();
@@ -281,46 +306,47 @@ void GAB::Save(){
 
   fwrite(&opt.objSize,sizeof(int),1,file);
   fwrite(&stages,sizeof(int),1,file);
-  int size;
+  numBranchNodes = treeIndex[stages];
+  fwrite(&numBranchNodes,sizeof(int),1,file);
+  
+  int *tree = new int[stages];
+  float *threshold = new float[stages];
   for(int i = 0;i<stages;i++){
-    size = feaIds[i].size();
-    int *feaId = new int[size];
-    for(int j = 0;j<size;j++)
-      feaId[j] = feaIds[i][j];
-    fwrite(&size,sizeof(int),1,file);
-    fwrite(feaId,sizeof(int),feaIds[i].size(),file);
-    delete []feaId;
-    unsigned char* cutpoint = new unsigned char[2*size];
-    for(int j = 0;j<size;j++){
-      cutpoint[2*j] = cutpoints[i][j][0];
-      cutpoint[2*j+1] = cutpoints[i][j][1];
-    }
-    fwrite(cutpoint,sizeof(unsigned char),2*cutpoints[i].size(),file);
-    delete []cutpoint;
-    int *leftChild = new int[size];
-    for(int j = 0;j<size;j++){
-      leftChild[j] = leftChilds[i][j];
-    }
-    fwrite(leftChild,sizeof(int),leftChilds[i].size(),file);
-    delete []leftChild;
-    int *rightChild = new int[size];
-    for(int j = 0;j<size;j++){
-      rightChild[j] = rightChilds[i][j];
-    }
-    fwrite(rightChild,sizeof(int),rightChilds[i].size(),file);
-    delete []rightChild;
-    size = fits[i].size();
-    float *fit = new float[size];
-    for(int j = 0;j<size;j++){
-      fit[j] = fits[i][j];
-    }
-    fwrite(&size,sizeof(int),1,file);
-    fwrite(fit,sizeof(float),fits[i].size(),file);
-    delete []fit;
-    float threshold = thresholds[i];
-    fwrite(&threshold,sizeof(float),1,file);
-
+    tree[i] = treeIndex[i];
+    threshold[i] = thresholds[i];
   }
+  fwrite(tree,sizeof(int),stages,file);
+  fwrite(threshold,sizeof(float),stages,file);
+  delete []tree;
+  delete []threshold;
+
+  int *feaId = new int[numBranchNodes];
+  int *leftChild = new int[numBranchNodes];
+  int *rightChild = new int[numBranchNodes];
+  unsigned char* cutpoint = new unsigned char[2*numBranchNodes];
+  for(int i = 0;i<numBranchNodes;i++){
+    feaId[i] = feaIds[i];
+    leftChild[i] = leftChilds[i];
+    rightChild[i] = rightChilds[i];
+    cutpoint[2*i] = cutpoints[i*2];
+    cutpoint[2*i+1] = cutpoints[i*2+1];
+  }
+  fwrite(feaId,sizeof(int),numBranchNodes,file);
+  fwrite(leftChild,sizeof(int),numBranchNodes,file);
+  fwrite(rightChild,sizeof(int),numBranchNodes,file);
+  fwrite(cutpoint,sizeof(unsigned char),2*numBranchNodes,file);
+  delete []feaId;
+  delete []leftChild;
+  delete []rightChild;
+  delete []cutpoint;
+
+  int numLeafNodes = numBranchNodes+stages;
+  float *fit = new float[numLeafNodes];
+  for(int i = 0;i<numLeafNodes;i++)
+    fit[i] = fits[i];
+  fwrite(fit,sizeof(float),numLeafNodes,file);
+  delete []fit;
+
   fclose(file);
 }
 
@@ -382,31 +408,29 @@ float GAB::TestSubTree(vector<float> fit, vector< vector<unsigned char> > cutpoi
   return score;
 }
 
-bool GAB::NPDClassify(Mat test,float &score){
+bool GAB::NPDClassify(Mat test,float &score, int sIndex){
+  const Options& opt = Options::GetInstance();
   float Fx = 0;
-  int x1,y1,x2,y2;
+
   for(int i = 0 ;i<stages;i++){
-    int node = 0;
+    int node = treeIndex[i];
     while(node > -1){
-      int feaid = feaIds[i][node];
-      GetPoints(feaid,&x1,&y1,&x2,&y2);
-      unsigned char p1 = test.at<uchar>(x1,y1);
-      unsigned char p2 = test.at<uchar>(x2,y2);
+      unsigned char p1 = test.at<uchar>(points1x[sIndex][node],points1y[sIndex][node]);
+      unsigned char p2 = test.at<uchar>(points2x[sIndex][node],points2y[sIndex][node]);
       unsigned char fea = ppNpdTable.at<uchar>(p1,p2);
 
-      if(fea < cutpoints[i][node][0] || fea > cutpoints[i][node][1])
-        node = leftChilds[i][node];
+      if(fea < cutpoints[node*2] || fea > cutpoints[node*2+1])
+        node = leftChilds[node];
       else
-        node = rightChilds[i][node];
+        node = rightChilds[node];
     }
 
     node = -node -1;
-    Fx = Fx + fits[i][node];
+    Fx = Fx + fits[node];
 
     if(Fx < thresholds[i]){
       return 0;
     }
-
   }
   score = Fx;
   return 1;
@@ -445,13 +469,14 @@ void GAB::MiningNeg(int n,DataSet& neg){
       region_pool[i] = neg.NextImage(i);
     }
 
-    #pragma omp parallel for
+  //  #pragma omp parallel for
     for (int i = 0; i < pool_size; i++) {
       float score = 0;
-      if(NPDClassify(region_pool[i].clone(),score)){
+      if(NPDClassify(region_pool[i].clone(),score,0)){
         #pragma omp critical 
         {
-          printf("%d get\n",st);
+          if(st%(n/10)==0)
+            printf("%d get\n",st);
           neg.imgs.push_back(region_pool[i].clone());
           neg.Fx[st]=score;
           if(opt.generate_hd){
@@ -474,95 +499,170 @@ void GAB::LoadModel(string path){
   FILE* file;
   if((file = fopen(path.c_str(), "rb"))==NULL)
     return;
+
+  fread(&DetectSize,sizeof(int),1,file);
+  fread(&stages,sizeof(int),1,file);
+  fread(&numBranchNodes,sizeof(int),1,file);
+  printf("stages num :%d\n",stages);
+
+  int *_tree = new int[stages];
+  float *_threshold = new float[stages];
+  fread(_tree,sizeof(int),stages,file);
+  fread(_threshold,sizeof(float),stages,file);
+  for(int i = 0;i<stages;i++){
+    treeIndex.push_back(_tree[i]);
+    thresholds.push_back(_threshold[i]);
+  }
+  delete []_tree;
+  delete []_threshold;
+
+  int *_feaId = new int[numBranchNodes];
+  int *_leftChild = new int[numBranchNodes];
+  int *_rightChild = new int[numBranchNodes];
+  unsigned char* _cutpoint = new unsigned char[2*numBranchNodes];
+  fread(_feaId,sizeof(int),numBranchNodes,file);
+  fread(_leftChild,sizeof(int),numBranchNodes,file);
+  fread(_rightChild,sizeof(int),numBranchNodes,file);
+  fread(_cutpoint,sizeof(unsigned char),2*numBranchNodes,file);
+  for(int i = 0;i<numBranchNodes;i++){
+    feaIds.push_back(_feaId[i]);
+    leftChilds.push_back(_leftChild[i]);
+    rightChilds.push_back(_rightChild[i]);
+    cutpoints.push_back(_cutpoint[2*i]);
+    cutpoints.push_back(_cutpoint[2*i+1]);
+    for(int j = 0;j<29;j++){
+      int x1,y1,x2,y2;
+      GetPoints(_feaId[i],&x1,&y1,&x2,&y2);
+      float factor = (float)pWinSize[j]/(float)DetectSize;
+      points1x[j].push_back(x1*factor);
+      points1y[j].push_back(y1*factor);
+      points2x[j].push_back(x2*factor);
+      points2y[j].push_back(y2*factor);
+    }
+  }
+  delete []_feaId;
+  delete []_leftChild;
+  delete []_rightChild;
+  delete []_cutpoint;
+
+  int numLeafNodes = numBranchNodes+stages;
+  float *_fit = new float[numLeafNodes];
+  fread(_fit,sizeof(float),numLeafNodes,file);
+  for(int i = 0;i<numLeafNodes;i++){
+    fits.push_back(_fit[i]);
+  }
+  delete []_fit;
+
+  fclose(file);
+}
+
+/*
+void GAB::LoadModel(string path){
+  FILE* file;
+  if((file = fopen(path.c_str(), "rb"))==NULL)
+    return;
   int size;
+
+  points1x.resize(29);
+  points1y.resize(29);
+  points2x.resize(29);
+  points2y.resize(29);
+
+  int pWinSize[29]={24,29,35,41,50,60,72,86,103,124,149,178,214,257,308,370,444,532,639,767,920,1104,1325,1590,1908,2290,2747,3297,3956};
 
   fread(&DetectSize,sizeof(int),1,file);
   fread(&stages,sizeof(int),1,file);
   printf("stages num :%d\n",stages);
+  treeIndex.push_back(0);
   for(int j = 0;j<stages;j++){
     printf("stage: %d\n",j);
-    vector<int> feaId, leftChild, rightChild;
-    vector< vector<unsigned char> > cutpoint;
-    vector<float> fit;
-    float threshold;
 
     fread(&size,sizeof(int),1,file);
+    int root = treeIndex[j];
+    root += size;
+    treeIndex.push_back(root);
+
     int *_feaId = new int[size];
     fread(_feaId,sizeof(int),size,file);
     for(int i = 0;i<size;i++){
-      feaId.push_back(_feaId[i]);
+      feaIds.push_back(_feaId[i]);
+      for(int j = 0;j<29;j++){
+        int x1,y1,x2,y2;
+        GetPoints(_feaId[i],&x1,&y1,&x2,&y2);
+        float factor = (float)pWinSize[j]/(float)DetectSize;
+        points1x[j].push_back(x1*factor);
+        points1y[j].push_back(y1*factor);
+        points2x[j].push_back(x2*factor);
+        points2y[j].push_back(y2*factor);
+      }
+      
     }
     unsigned char *_cutpoint = new unsigned char[size*2];
     fread(_cutpoint,sizeof(unsigned char),2*size,file);
     for(int i =0;i<size;i++){
-      vector<unsigned char> cut;
-      cut.push_back(_cutpoint[2*i]);
-      cut.push_back(_cutpoint[2*i+1]);
-      cutpoint.push_back(cut);
+      cutpoints.push_back(_cutpoint[2*i]);
+      cutpoints.push_back(_cutpoint[2*i+1]);
     }
     int *_leftChild = new int[size];
     fread(_leftChild,sizeof(int),size,file);
-    for(int i =0;i<size;i++)
-      leftChild.push_back(_leftChild[i]);
+    for(int i =0;i<size;i++){
+      if(_leftChild[i]<0)
+        _leftChild[i] -= (treeIndex[j]+j);
+      else
+        _leftChild[i] += treeIndex[j];
+      leftChilds.push_back(_leftChild[i]);
+    }
     int *_rightChild = new int[size];
     fread(_rightChild,sizeof(int),size,file);
     for(int i =0;i<size;i++){
-      rightChild.push_back(_rightChild[i]);
+      if(_rightChild[i]<0)
+        _rightChild[i] -= (treeIndex[j]+j);
+      else
+        _rightChild[i] += treeIndex[j];
+      rightChilds.push_back(_rightChild[i]);
     }
     fread(&size,sizeof(int),1,file);
     float *_fit = new float[size];
     fread(_fit,sizeof(float),size,file);
     for(int i =0;i<size;i++){
-      fit.push_back(_fit[i]);
+      fits.push_back(_fit[i]);
     }
+    float threshold;
     fread(&threshold,sizeof(float),1,file);
-
-    feaIds.push_back(feaId);
-    leftChilds.push_back(leftChild);
-    rightChilds.push_back(rightChild);
-    cutpoints.push_back(cutpoint);
-    fits.push_back(fit);
     thresholds.push_back(threshold);
-
-    delete []_feaId;
-    delete []_cutpoint;
-    delete []_leftChild;
-    delete []_rightChild;
-    delete []_fit;
   }
   fclose(file);
 }
+*/
 
 vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
   const Options& opt = Options::GetInstance();
   int width = img.cols;
   int height = img.rows;
-  int win = 24;
-  float factor = 1.2;
-  int x = 0;
-  int y = 0;
-  Mat crop_img;
-  while(win <= width && win <= height){
-    int step = win * 0.1;
+  for(int i = 0;i<29;i++){
+    int win = pWinSize[i];
+    if(win>width || win>height){
+      break;
+    }
+    int step =(int) floor(win * 0.1);
     if(win>40)
-      step = win*0.05;
-    while (y<=(height-win)){
-      while (x<=(width-win)) {
+      step = (int) floor(win*0.05);
+    #pragma omp parallel for
+    for(int y = 0;y<(height-win);y+=step){
+      for(int x = 0;x<(width-win);x+=step){
         float score;
         Rect roi(x, y, win, win);
-        cv::resize(img(roi), crop_img, Size(opt.objSize, opt.objSize));
-        if(NPDClassify(crop_img,score)){
+        Mat crop_img = img(roi).clone();
+   //     cv::resize(img(roi), crop_img, Size(opt.objSize, opt.objSize));
+        if(NPDClassify(img(roi),score,i)){
+          #pragma omp critical
+          {
           rects.push_back(roi);
           scores.push_back(score);
+          }
         }
-        x += step;
       }
-      x = 0;
-      y += step;
     }
-    x = 0;
-    y = 0;
-    win = win*factor;
   }
   vector<int> picked;
   vector<int> Srect;
@@ -576,8 +676,8 @@ vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
     int delta = floor(Srect[idx]*opt.enDelta);
     int y0 = max(rects[idx].y - floor(2.5 * delta),0);
     int y1 = min(rects[idx].y + Srect[idx] + floor(2.5 * delta),imgHeight);
-    int x0 = max(rects[idx].x - delta,1);
-    int x1 = min(rects[idx].x + Srect[idx] - 1 + delta,imgWidth);
+    int x0 = max(rects[idx].x + delta,0);
+    int x1 = min(rects[idx].x + Srect[idx] - delta,imgWidth);
 
     rects[idx].y = y0;
     rects[idx].x = x0;

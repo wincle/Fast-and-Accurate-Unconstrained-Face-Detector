@@ -167,7 +167,7 @@ void DataSet::MoreNeg(const int n){
   FILE *file = fopen(opt.initNeg.c_str(), "r");
   int count = 0;
   char buff[300];
-  while (fscanf(file, "%s", buff) > 0) {
+  while (fscanf(file, "%s", buff) > 0 && count < n) {
     Mat img = imread(buff,CV_LOAD_IMAGE_GRAYSCALE);
     imgs.push_back(img);
     count ++;

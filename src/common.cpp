@@ -16,7 +16,7 @@ Options::Options(){ //default value
   trimFrac = 0.005;
   minLeafFrac = 0.01;
   minLeaf = 100;
-  minSamples = 100000;
+  minSamples = 1000;
   maxWeight = 100;
   augment = true;
   saveStep = 10;

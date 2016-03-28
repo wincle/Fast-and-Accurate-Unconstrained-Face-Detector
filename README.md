@@ -29,6 +29,16 @@ NonfaceDB.txt
 ....
 ```
 
+```
+hd.txt
+../data/hd/000001.jpg
+../data/hd/000002.jpg
+../data/hd/000003.jpg
+...
+```
+
+the hd image is hard negative for init training , the size of it should to be the same with your model template(24 for me).
+
 The config is in src/common.cpp 
 
 #Contact with me
