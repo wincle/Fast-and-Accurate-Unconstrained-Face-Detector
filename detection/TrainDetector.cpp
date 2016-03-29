@@ -7,19 +7,6 @@
 
 using namespace cv;
 
-void TrainDetector::Train(){
-  Options& opt = Options::GetInstance();
-  DataSet pos,neg;
-
-  GAB Gab;
-  Gab.LoadModel(opt.outFile);
-  DataSet::LoadDataSet(pos, neg, Gab.stages);
-  Gab.LearnGAB(pos,neg);
-  Gab.Save();
-  pos.Clear();
-  neg.Clear();
-}
-
 void TrainDetector::FddbDetect(){
   Options& opt = Options::GetInstance();
 
@@ -31,7 +18,6 @@ void TrainDetector::FddbDetect(){
   timeval start, end;
   float time = 0;
 
-//  #pragma omp parallel for
   for(int i = 1;i<=10;i++){
     char fddb[300];
     char fddb_out[300];
