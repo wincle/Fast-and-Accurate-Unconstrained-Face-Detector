@@ -2,9 +2,7 @@
 
 The C++ implementation of NPD
 
-Notice:The code is being Test!
-
-The result is trained by 200k pos data and the template is 24*24
+The result is trained by 200k pos data and the template is 24*24, stages number is 620, model size is 540kb.
 
 
 # How to use
@@ -40,6 +38,10 @@ hd.txt(Optional)
 the hd image is hard negative for init training , the size of it should to be the same with your model template(24 for me).
 
 The config is in src/common.cpp 
+
+#TODO
+
+Speed Up the Detection
 
 #Contact with me
 

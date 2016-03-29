@@ -675,8 +675,8 @@ vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
     int delta = floor(Srect[idx]*opt.enDelta);
     int y0 = max(rects[idx].y - floor(2.5 * delta),0);
     int y1 = min(rects[idx].y + Srect[idx] + floor(2.5 * delta),imgHeight);
-    int x0 = max(rects[idx].x + delta,0);
-    int x1 = min(rects[idx].x + Srect[idx] - delta,imgWidth);
+    int x0 = max(rects[idx].x + floor(0.5 * delta),0);
+    int x1 = min(rects[idx].x + Srect[idx] - floor(0.5 * delta),imgWidth);
 
     rects[idx].y = y0;
     rects[idx].x = x0;
