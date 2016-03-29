@@ -76,7 +76,8 @@ void TrainDetector::Live() {
     index = Gab.DetectFace(gray,rects,scores);
 
     for (int i = 0; i < index.size(); i++) {
-      frame = Gab.Draw(frame, rects[index[i]]);
+      if(scores[index[i]]>100)
+        frame = Gab.Draw(frame, rects[index[i]]);
     }
     cv::imshow("live", frame);
     int key = cv::waitKey(30);
