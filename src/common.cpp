@@ -22,4 +22,5 @@ Options::Options(){ //default value
   saveStep = 10;
   generate_hd = false;
   enDelta = 0.1;
+  useInitHard = false;
 }

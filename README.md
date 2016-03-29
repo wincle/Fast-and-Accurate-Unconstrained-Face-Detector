@@ -30,7 +30,7 @@ NonfaceDB.txt
 ```
 
 ```
-hd.txt
+hd.txt(Optional)
 ../data/hd/000001.jpg
 ../data/hd/000002.jpg
 ../data/hd/000003.jpg

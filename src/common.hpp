@@ -55,6 +55,8 @@ class Options{
     bool generate_hd;
     /* \breif use for resize box */
     float enDelta;
+    /* \use hd or not */
+    bool useInitHard;
 
   private:
     Options();

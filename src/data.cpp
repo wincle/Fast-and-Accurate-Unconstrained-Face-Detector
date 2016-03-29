@@ -164,16 +164,33 @@ void DataSet::LoadNegativeDataSet(const string& negative, int pos_num, int stage
 }
 void DataSet::MoreNeg(const int n){
   const Options& opt = Options::GetInstance();
-  FILE *file = fopen(opt.initNeg.c_str(), "r");
-  int count = 0;
-  char buff[300];
-  while (fscanf(file, "%s", buff) > 0 && count < n) {
-    Mat img = imread(buff,CV_LOAD_IMAGE_GRAYSCALE);
-    imgs.push_back(img);
-    count ++;
+  if(opt.useInitHard){
+    FILE *file = fopen(opt.initNeg.c_str(), "r");
+    int count = 0;
+    char buff[300];
+    while (fscanf(file, "%s", buff) > 0 && count < n) {
+      Mat img = imread(buff,CV_LOAD_IMAGE_GRAYSCALE);
+      imgs.push_back(img);
+      count ++;
+    }
+    if(count != n)
+      printf("hd imgs not enough!\n");
   }
-  if(count != n)
-    printf("hd imgs not enough!\n");
+  else{
+    int pool_size = opt.numThreads;
+    vector<Mat> region_pool(pool_size);
+    int st = 0;
+    int need = n - st;
+
+    while(st<n){
+      for(int i = 0;i<pool_size;i++){
+        region_pool[i] = NextImage(i);
+        imgs.push_back(region_pool[i].clone());
+        st++;
+      }
+    }
+    random_shuffle(imgs.begin(),imgs.end());
+  }
 }
 
 Mat DataSet::NextImage(int i) {

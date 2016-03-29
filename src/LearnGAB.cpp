@@ -469,7 +469,7 @@ void GAB::MiningNeg(int n,DataSet& neg){
       region_pool[i] = neg.NextImage(i);
     }
 
-  //  #pragma omp parallel for
+    #pragma omp parallel for
     for (int i = 0; i < pool_size; i++) {
       float score = 0;
       if(NPDClassify(region_pool[i].clone(),score,0)){
@@ -653,7 +653,6 @@ vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
         float score;
         Rect roi(x, y, win, win);
         Mat crop_img = img(roi).clone();
-   //     cv::resize(img(roi), crop_img, Size(opt.objSize, opt.objSize));
         if(NPDClassify(img(roi),score,i)){
           #pragma omp critical
           {
