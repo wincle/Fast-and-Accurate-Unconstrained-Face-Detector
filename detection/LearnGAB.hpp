@@ -65,7 +65,7 @@ class GAB{
     vector<float> thresholds;
     int numBranchNodes;
     /* \breif save the points of feature id */
-    vector< vector<int> > points1x,points2x,points1y,points2y;
+    vector< vector<int> > points1,points2;
     /* \breif vector contain point-feature map */
     vector<int> lpoints;
     vector<int> rpoints;
