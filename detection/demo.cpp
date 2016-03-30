@@ -16,6 +16,9 @@ int main(int argc, char* argv[]){
     printf(help);
   }
   else if (strcmp(argv[1], "test") == 0) {
+    dector.Detect();
+  }
+  else if (strcmp(argv[1], "fddb") == 0) {
     dector.FddbDetect();
   }
   else if (strcmp(argv[1], "live") == 0) {

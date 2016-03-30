@@ -4,6 +4,10 @@
 class TrainDetector{
   public:
     /*
+     * \breif single detect
+     */
+    void Detect();
+    /*
      * \breif Detect For FDDB
      */
     void FddbDetect();
