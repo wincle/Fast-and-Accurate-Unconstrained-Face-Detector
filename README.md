@@ -4,7 +4,7 @@ The C++ implementation of NPD
 
 The result is trained by 200k pos data and the template is 24*24, stages number is 620, model size is 540kb.
 
-size    |  speed(ms)  | cores  
+minFaceSize    |  speed(ms)  | cores  
 :-----: | :----:    | :----: 
 80*80 |    30     | 1    
 24x24 |    500    | 1
