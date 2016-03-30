@@ -47,7 +47,7 @@ The config is in src/common.cpp
 
 #TODO
 
-Speed Up the Detection
+Speed Up the Detection and Training
 
 #Contact with me
 

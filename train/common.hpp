@@ -57,6 +57,8 @@ class Options{
     float enDelta;
     /* \use hd or not */
     bool useInitHard;
+    /* \Ration of neg/pos */
+    float negRatio;
 
   private:
     Options();

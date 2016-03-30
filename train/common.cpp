@@ -16,11 +16,12 @@ Options::Options(){ //default value
   trimFrac = 0.005;
   minLeafFrac = 0.01;
   minLeaf = 100;
-  minSamples = 1000;
+  minSamples = 20000;
   maxWeight = 100;
   augment = true;
   saveStep = 10;
   generate_hd = false;
   enDelta = 0.1;
   useInitHard = false;
+  negRatio = 0.5;
 }

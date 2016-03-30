@@ -32,7 +32,7 @@ void DataSet::LoadDataSet(DataSet& pos, DataSet& neg, int stages){
   pos.LoadPositiveDataSet(opt.faceDBFile,stages);
   printf("Pos data finish %d\n",pos.size);
   printf("Loading Neg data\n");
-  neg.LoadNegativeDataSet(opt.nonfaceDBFile,pos.size,stages);
+  neg.LoadNegativeDataSet(opt.nonfaceDBFile,pos.size*opt.negRatio,stages);
   printf("Neg data finish %d\n",neg.size);
 }
 void DataSet::LoadPositiveDataSet(const string& positive,int stages){

@@ -68,7 +68,7 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
     #pragma omp parallel for
     for (int i = 0; i < nPos; i++) {
       float score = 0;
-      if(NPDClassify(pos.imgs[i].clone(),score,0)){
+      if(NPDClassify(pos.imgs[i],score,0)){
           pos.Fx[i]=score;
       }
       else{
@@ -81,8 +81,8 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
     }
 
 
-    MiningNeg(nPos,neg);
-    if(neg.imgs.size()<pos.imgs.size()){
+    MiningNeg(nPos*opt.negRatio,neg);
+    if(neg.imgs.size()<pos.imgs.size()*opt.negRatio){
       printf("neg not enough, change neg rate or add neg Imgs %d %d\n",pos.imgs.size(),neg.imgs.size());
       return;
     }
@@ -238,7 +238,7 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
 
     neg.Remove(negPassIndex);
     if(neg.size<opt.minSamples)
-      MiningNeg(nPos,neg);
+      MiningNeg(nPos*opt.negRatio,neg);
    
     nonfaceFea = neg.ExtractPixel();
     pos.CalcWeight(1,opt.maxWeight);
@@ -472,7 +472,7 @@ void GAB::MiningNeg(int n,DataSet& neg){
     #pragma omp parallel for
     for (int i = 0; i < pool_size; i++) {
       float score = 0;
-      if(NPDClassify(region_pool[i].clone(),score,0)){
+      if(NPDClassify(region_pool[i],score,0)){
         #pragma omp critical 
         {
           if(st%(n/10)==0)
@@ -555,82 +555,3 @@ void GAB::LoadModel(string path){
 
   fclose(file);
 }
-
-/*
-void GAB::LoadModel(string path){
-  FILE* file;
-  if((file = fopen(path.c_str(), "rb"))==NULL)
-    return;
-  int size;
-
-  points1x.resize(29);
-  points1y.resize(29);
-  points2x.resize(29);
-  points2y.resize(29);
-
-  int pWinSize[29]={24,29,35,41,50,60,72,86,103,124,149,178,214,257,308,370,444,532,639,767,920,1104,1325,1590,1908,2290,2747,3297,3956};
-
-  fread(&DetectSize,sizeof(int),1,file);
-  fread(&stages,sizeof(int),1,file);
-  printf("stages num :%d\n",stages);
-  treeIndex.push_back(0);
-  for(int j = 0;j<stages;j++){
-    printf("stage: %d\n",j);
-
-    fread(&size,sizeof(int),1,file);
-    int root = treeIndex[j];
-    root += size;
-    treeIndex.push_back(root);
-
-    int *_feaId = new int[size];
-    fread(_feaId,sizeof(int),size,file);
-    for(int i = 0;i<size;i++){
-      feaIds.push_back(_feaId[i]);
-      for(int j = 0;j<29;j++){
-        int x1,y1,x2,y2;
-        GetPoints(_feaId[i],&x1,&y1,&x2,&y2);
-        float factor = (float)pWinSize[j]/(float)DetectSize;
-        points1x[j].push_back(x1*factor);
-        points1y[j].push_back(y1*factor);
-        points2x[j].push_back(x2*factor);
-        points2y[j].push_back(y2*factor);
-      }
-      
-    }
-    unsigned char *_cutpoint = new unsigned char[size*2];
-    fread(_cutpoint,sizeof(unsigned char),2*size,file);
-    for(int i =0;i<size;i++){
-      cutpoints.push_back(_cutpoint[2*i]);
-      cutpoints.push_back(_cutpoint[2*i+1]);
-    }
-    int *_leftChild = new int[size];
-    fread(_leftChild,sizeof(int),size,file);
-    for(int i =0;i<size;i++){
-      if(_leftChild[i]<0)
-        _leftChild[i] -= (treeIndex[j]+j);
-      else
-        _leftChild[i] += treeIndex[j];
-      leftChilds.push_back(_leftChild[i]);
-    }
-    int *_rightChild = new int[size];
-    fread(_rightChild,sizeof(int),size,file);
-    for(int i =0;i<size;i++){
-      if(_rightChild[i]<0)
-        _rightChild[i] -= (treeIndex[j]+j);
-      else
-        _rightChild[i] += treeIndex[j];
-      rightChilds.push_back(_rightChild[i]);
-    }
-    fread(&size,sizeof(int),1,file);
-    float *_fit = new float[size];
-    fread(_fit,sizeof(float),size,file);
-    for(int i =0;i<size;i++){
-      fits.push_back(_fit[i]);
-    }
-    float threshold;
-    fread(&threshold,sizeof(float),1,file);
-    thresholds.push_back(threshold);
-  }
-  fclose(file);
-}
-*/
