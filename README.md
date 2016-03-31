@@ -10,6 +10,7 @@ minFaceSize    |  speed(ms)  | cores
 24x24 |    500    | 1
 24*24 |   60     | 16
 
+the detection result is test on FDDB data set (average 400*400)
 
 # How to use
 - you should mkdir data first
