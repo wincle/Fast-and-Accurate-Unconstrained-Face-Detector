@@ -46,6 +46,7 @@ GAB::GAB(){
   points2x.resize(29);
   points2y.resize(29);
 
+  numBranchNodes = 0;
 }
 
 void GAB::LearnGAB(DataSet& pos, DataSet& neg){
@@ -261,13 +262,9 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
 void GAB::SaveIter(vector<int> feaId, vector<int> leftChild, vector<int> rightChild, vector< vector<unsigned char> > cutpoint, vector<float> fit, float threshold){
   const Options& opt = Options::GetInstance();
 
-  int root = 0;
-  if(stages == 0)
-    treeIndex.push_back(0);
-  else
-    root = treeIndex[stages];
-  root += feaId.size();
+  int root = numBranchNodes;
   treeIndex.push_back(root);
+  numBranchNodes += feaId.size();
 
   for(int i = 0;i<feaId.size();i++){
     feaIds.push_back(feaId[i]);
@@ -306,7 +303,6 @@ void GAB::Save(){
 
   fwrite(&opt.objSize,sizeof(int),1,file);
   fwrite(&stages,sizeof(int),1,file);
-  numBranchNodes = treeIndex[stages];
   fwrite(&numBranchNodes,sizeof(int),1,file);
   
   int *tree = new int[stages];
