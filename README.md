@@ -16,7 +16,7 @@ the detection result is test on FDDB data set (average 400*400)
 
   The "1226model" is dump from matlab code which is from References, the model has 1226 stages , if you want to try this model ,you should rename it "result".
 
-  You must change the code in detection/LearnGAB.cpp:86~96. Because the different between matlab and OpenCV.
+  You must change the code in detection/LearnGAB.cpp:86~96. Because the difference between matlab and OpenCV. You should also change the coefficient in detection/LearnGAB.cpp:276~279 to fit the model.
 
 # How to use
 - you should mkdir data first
