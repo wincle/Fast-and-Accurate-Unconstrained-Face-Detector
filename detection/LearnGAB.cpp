@@ -82,11 +82,18 @@ void GAB::GetPoints(int feaid, int *x1, int *y1, int *x2, int *y2){
   const Options& opt = Options::GetInstance();
   int lpoint = lpoints[feaid];
   int rpoint = rpoints[feaid];
-  //if use the model dump from matlab,should swap x,y here 
+  //use the model trained by yourself
   *y1 = lpoint%opt.objSize;
   *x1 = lpoint/opt.objSize;
   *y2 = rpoint%opt.objSize;
   *x2 = rpoint/opt.objSize;
+  //use the 1226model
+  /*
+   *y1 = lpoint/opt.objSize;
+   *x1 = lpoint%opt.objSize;
+   *y2 = rpoint/opt.objSize;
+   *x2 = rpoint%opt.objSize;
+   */
 }
 
 void GAB::LoadModel(string path){

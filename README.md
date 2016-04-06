@@ -1,14 +1,21 @@
 # NPD
 
-The result is trained by 200k pos data and the template is 24*24, stages number is 620, model size is 540kb.
+The C++ implementation of A Fast and Accurate Unconstrained Face Detector. 
 
-minFaceSize    |  speed(ms)  | cores  
-:-----: | :----:    | :----: 
+The result is trained by 200k pos data and the template is 24*24, stages number is 620, model size is 540kb.
+minFaceSize    |  speed(ms)  | cores 
+:-----: | :----:    | :----:
 80*80 |    30     | 1    
 24x24 |    500    | 1
 24*24 |   60     | 16
 
 the detection result is test on FDDB data set (average 400*400)
+
+# NOTICE
+
+  The "1226model" is dump from matlab code which is from References, the model has 1226 stages , if you want to try this model ,you should rename it "result".
+
+  You must change the code in detection/LearnGAB.cpp:86~96. Because the different between matlab and OpenCV.
 
 # How to use
 - you should mkdir data first
