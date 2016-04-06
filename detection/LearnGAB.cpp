@@ -284,6 +284,9 @@ vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
     rects[idx].height = y1-y0 + 1;
   }
 
+
+  delete []I;
+  delete []O;
   return picked;
 }
 
