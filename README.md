@@ -3,6 +3,7 @@
 The C++ implementation of A Fast and Accurate Unconstrained Face Detector. 
 
 The result is trained by 200k pos data and the template is 24*24, stages number is 620, model size is 540kb.
+
 minFaceSize    |  speed(ms)  | cores 
 :-----: | :----:    | :----:
 80*80 |    30     | 1    
