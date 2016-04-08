@@ -286,7 +286,6 @@ vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
 
 
   delete []I;
-  delete []O;
   return picked;
 }
 
