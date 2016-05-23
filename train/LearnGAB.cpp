@@ -61,7 +61,8 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
   int nFea=0;
   float aveEval=0;
 
-  float *w = new float[nPos];
+  float *wP = new float[nPos];
+  float *wN = new float[nNeg];
 
   if(stages!=0){
     
@@ -112,12 +113,12 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
       negIndex.push_back(i);
 
     //trim weight
-    memcpy(w,pos.W,nPos*sizeof(float));
-    std::sort(&w[0],&w[nPos]);
+    memcpy(wP,pos.W,nPos*sizeof(float));
+    std::sort(&wP[0],&wP[nPos]);
     int k; 
     float wsum;
     for(int i =0;i<nPos;i++){
-      wsum += w[i];
+      wsum += wP[i];
       if (wsum>=opt.trimFrac){
         k = i;
         break;
@@ -125,24 +126,24 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
     }
     vector< int >::iterator iter;
     for(iter = posIndex.begin();iter!=posIndex.end();){
-      if(pos.W[*iter]<w[k])
+      if(pos.W[*iter]<wP[k])
         iter = posIndex.erase(iter);
       else
         ++iter;
     }
 
     wsum = 0;
-    memcpy(w,neg.W,nNeg*sizeof(float));
-    std::sort(&w[0],&w[nNeg]);
+    memcpy(wN,neg.W,nNeg*sizeof(float));
+    std::sort(&wN[0],&wN[nNeg]);
     for(int i =0;i<nNeg;i++){
-      wsum += w[i];
+      wsum += wN[i];
       if (wsum>=opt.trimFrac){
         k = i;
         break;
       }
     }
     for(iter = negIndex.begin();iter!=negIndex.end();){
-      if(neg.W[*iter]<w[k])
+      if(neg.W[*iter]<wN[k])
         iter = negIndex.erase(iter);
       else
         ++iter;
@@ -195,10 +196,10 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
     for(int i=0; i<nNegSam; i++)
       negPassIndex.push_back(i);
 
-    memcpy(w,pos.Fx,nPos*sizeof(float));
-    sort(w,w+nPos);
+    memcpy(wP,pos.Fx,nPos*sizeof(float));
+    sort(wP,wP+nPos);
     int index = max(floor(nPos*(1-opt.minDR)),0);
-    float threshold = w[index];
+    float threshold = wP[index];
 
     for(iter = negPassIndex.begin(); iter != negPassIndex.end();){
       if(neg.Fx[*iter] < threshold)
@@ -255,7 +256,8 @@ void GAB::LearnGAB(DataSet& pos, DataSet& neg){
     }
 
   }
-  delete []w;
+  delete []wP;
+  delete []wN;
 
 }
 
