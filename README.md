@@ -62,6 +62,8 @@ You can join the Google group NPD_C_Group to talk with each other.
 
 https://groups.google.com/forum/?hl=en#!forum/npd_c_group
 
+You can test it on http://139.129.56.64 
+
 #License
 
 BSD 3-Clause
