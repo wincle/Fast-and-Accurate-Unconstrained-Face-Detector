@@ -56,11 +56,7 @@ The config is in src/common.cpp
 
 Speed Up the Detection and Training
 
-#Contact with me
-
-You can join the Google group NPD_C_Group to talk with each other.
-
-https://groups.google.com/forum/?hl=en#!forum/npd_c_group
+#Try it
 
 You can test it on http://139.129.56.64 
 
