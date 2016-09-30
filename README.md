@@ -56,10 +56,6 @@ The config is in src/common.cpp
 
 Speed Up the Detection and Training
 
-#Try it
-
-You can test it on http://139.129.56.64 
-
 #License
 
 BSD 3-Clause
@@ -67,3 +63,8 @@ BSD 3-Clause
 # References
 
 http://www.cbsr.ia.ac.cn/users/scliao/projects/npdface/index.html
+
+#求带走啊
+毕业季求带走，西电硕士，期望地点：天津、大连、沈阳、青岛、北京。
+联系邮箱:jpwc@qq.com
+前段时间忙工作，没好好准备招聘，结果被剩了，在这打个卖身契广告，好苦啊我。
