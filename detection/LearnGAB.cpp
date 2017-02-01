@@ -165,7 +165,7 @@ vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
   int minFace = 20;
   int maxFace = 3000;
 
-  omp_set_num_threads(opt.numThreads);
+  omp_set_dynamic(1);
 
   int height = img.rows;
   int width =  img.cols;
@@ -179,6 +179,21 @@ vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
     }
   }
 
+  for (auto i = 0; i < 29; i++)
+  {
+	  if (sizePatch >= pWinSize[i])
+	  {
+		  thresh = i;
+		  continue;
+	  }
+	  else
+	  {
+		  break;
+	  }
+  }
+
+  thresh = thresh + 1; // the total no. of scales that will be searched
+
   minFace = max(minFace, opt.objSize);
   maxFace = min(maxFace, min(height, width));
 
@@ -187,7 +202,7 @@ vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
   {
     return picked;
   }
-  for(int k = 0; k < 29; k++) // process each scale
+  for(int k = 0; k < thresh; k++) // process each scale
   {
     if(pWinSize[k] < minFace) continue;
     else if(pWinSize[k] > maxFace) break;
@@ -351,7 +366,7 @@ vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
 
 vector<int> GAB::Nms(vector<Rect>& rects, vector<float>& scores, vector<int>& Srect, float overlap, Mat Img) {
   int numCandidates = rects.size();
-  Mat predicate = Mat::eye(numCandidates,numCandidates,IPL_DEPTH_1U);
+  Mat_<uchar> predicate = Mat_<uchar>::eye(numCandidates, numCandidates);  
   for(int i = 0;i<numCandidates;i++){
     for(int j = i+1;j<numCandidates;j++){
       int h = min(rects[i].y+rects[i].height,rects[j].y+rects[j].height) - max(rects[i].y,rects[j].y);
@@ -359,8 +374,8 @@ vector<int> GAB::Nms(vector<Rect>& rects, vector<float>& scores, vector<int>& Sr
       int s = max(h,0)*max(w,0);
 
       if ((float)s/(float)(rects[i].width*rects[i].height+rects[j].width*rects[j].height-s)>=overlap){
-        predicate.at<bool>(i,j) = 1;
-        predicate.at<bool>(j,i) = 1;
+        predicate(i,j) = 1;
+        predicate(j,i) = 1;
       }
     }
   }
@@ -417,7 +432,7 @@ vector<int> GAB::Nms(vector<Rect>& rects, vector<float>& scores, vector<int>& Sr
   }
 
 
-  predicate = Mat::zeros(numLabels,numLabels,IPL_DEPTH_1U);
+  predicate = Mat_<uchar>::zeros(numLabels, numLabels);
 
   for(int i = 0;i<numLabels;i++){
     for(int j = i+1;j<numLabels;j++){
@@ -427,8 +442,8 @@ vector<int> GAB::Nms(vector<Rect>& rects, vector<float>& scores, vector<int>& Sr
 
       if((float)s/(float)(Rects[i].width*Rects[i].height)>=overlap || (float)s/(float)(Rects[j].width*Rects[j].height)>=overlap)
       {
-        predicate.at<bool>(i,j) = 1;
-        predicate.at<bool>(j,i) = 1;
+        predicate(i,j) = 1;
+        predicate(j,i) = 1;
       }
     }
   }
@@ -441,7 +456,7 @@ vector<int> GAB::Nms(vector<Rect>& rects, vector<float>& scores, vector<int>& Sr
   for(int i = 0;i<numLabels;i++){
     vector<int> index;
     for(int j = 0;j<numLabels;j++){
-      if(predicate.at<bool>(j,i)==1)
+      if(predicate(j,i)==1)
         index.push_back(j);
     }
     if(index.size()==0)
@@ -497,7 +512,7 @@ vector<float> GAB::Logistic(vector<float> scores ,vector<int> index){
   return Y;
 }
 
-int GAB::Partation(Mat predicate,vector<int>& label){
+int GAB::Partation(Mat_<uchar>& predicate,vector<int>& label){
   int N = predicate.cols;
   vector<int> parent;
   vector<int> rank;
@@ -508,7 +523,7 @@ int GAB::Partation(Mat predicate,vector<int>& label){
 
   for(int i=0;i<N;i++){
     for(int j=0;j<N;j++){
-      if (predicate.at<bool>(i,j)==0)
+      if (predicate(i,j)==0)
         continue;
       int root_i = Find(parent,i);
       int root_j = Find(parent,j);
