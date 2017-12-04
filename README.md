@@ -18,6 +18,7 @@ the detection result is test on FDDB data set (average 400*400)
 
   You must change the code in detection/LearnGAB.cpp:86~96. Because the difference between matlab and OpenCV. You should also change the coefficient in detection/LearnGAB.cpp:276~279 to fit the model.
 
+ set model path in common.cpp which is outfile.
 # How to use
 - you should mkdir data first
 
