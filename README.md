@@ -52,7 +52,7 @@ the hd image is hard negative for init training , the size of it should to be th
 
 The config is in common.cpp 
 
-#License
+# License
 
 BSD 3-Clause
 
