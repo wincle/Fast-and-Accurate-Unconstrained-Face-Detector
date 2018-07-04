@@ -104,7 +104,7 @@ class GAB{
      * \param label  The vector marked classification label
      * return number of classfication
      */
-    int Partation(cv::Mat predicate,vector<int>& label);
+    int Partation(cv::Mat_<uchar>& predicate,vector<int>& label);
     /*
      * \breif Find classfication area parent
      *

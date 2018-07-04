@@ -46,38 +46,6 @@ GAB::GAB(){
 
 }
 
-
-/*
-bool GAB::NPDClassify(Mat test,float &score, int sIndex){
-  const Options& opt = Options::GetInstance();
-  float Fx = 0;
-  unsigned char * I = test.data;
-
-  for(int i = 0 ;i<stages;i++){
-    int node = treeIndex[i];
-    while(node > -1){
-      unsigned char p1 = *(I+points1x[sIndex][node]*test.step[0]+points1y[sIndex][node]);
-      unsigned char p2 = *(I+points2x[sIndex][node]*test.step[0]+points2y[sIndex][node]);
-      unsigned char fea = ppNpdTable.at<uchar>(p1,p2);
-
-      if(fea < cutpoints[node*2] || fea > cutpoints[node*2+1])
-        node = leftChilds[node];
-      else
-        node = rightChilds[node];
-    }
-
-    node = -node -1;
-    Fx = Fx + fits[node];
-
-    if(Fx < thresholds[i]){
-      return 0;
-    }
-  }
-  score = Fx;
-  return 1;
-}
-*/
-
 void GAB::GetPoints(int feaid, int *x1, int *y1, int *x2, int *y2){
   const Options& opt = Options::GetInstance();
   int lpoint = lpoints[feaid];
@@ -169,6 +137,8 @@ vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
 
   int height = img.rows;
   int width =  img.cols;
+  int sizePatch = min(width,height);
+  int thresh = 0;
   const unsigned char *O = (unsigned char *) img.data;
   unsigned char *I = new unsigned char[width*height];
   int k =0;
@@ -179,7 +149,8 @@ vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
     }
   }
 
-  for (auto i = 0; i < 29; i++)
+
+  for (int i = 0; i < 29; i++)
   {
 	  if (sizePatch >= pWinSize[i])
 	  {
@@ -303,66 +274,6 @@ vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
   delete []I;
   return picked;
 }
-
-
-
-
-/*
-vector<int> GAB::DetectFace(Mat img,vector<Rect>& rects,vector<float>& scores){
-  const Options& opt = Options::GetInstance();
-  int width = img.cols;
-  int height = img.rows;
-  int minFace = 20;
-  for(int i = 0;i<29;i++){
-    int win = pWinSize[i];
-    if(win<minFace){
-      continue;
-    }
-    if(win>width || win>height){
-      break;
-    }
-    int step =(int) floor(win * 0.1);
-    if(win>40)
-      step = (int) floor(win*0.05);
- //   #pragma omp parallel for
-    for(int y = 0;y<(height-win);y+=step){
-      for(int x = 0;x<(width-win);x+=step){
-        float score;
-        Rect roi(x, y, win, win);
-        if(NPDClassify(img(roi),score,i)){
-          #pragma omp critical
-          {
-          rects.push_back(roi);
-          scores.push_back(score);
-          }
-        }
-      }
-    }
-  }
-  vector<int> picked;
-  vector<int> Srect;
-  picked = Nms(rects,scores,Srect,0.5,img);
-
-  int imgWidth = img.cols;
-  int imgHeight = img.rows;
-
-  for(int i = 0;i<picked.size();i++){
-    int idx = picked[i];
-    int delta = floor(Srect[idx]*opt.enDelta);
-    int y0 = max(rects[idx].y - floor(2.5 * delta),0);
-    int y1 = min(rects[idx].y + Srect[idx] + floor(2.5 * delta),imgHeight);
-    int x0 = max(rects[idx].x + floor(0.5 * delta),0);
-    int x1 = min(rects[idx].x + Srect[idx] - floor(0.5 * delta),imgWidth);
-
-    rects[idx].y = y0;
-    rects[idx].x = x0;
-    rects[idx].width = x1-x0 + 1;
-    rects[idx].height = y1-y0 + 1;
-  }
-  
-  return picked;
-}
-*/
 
 vector<int> GAB::Nms(vector<Rect>& rects, vector<float>& scores, vector<int>& Srect, float overlap, Mat Img) {
   int numCandidates = rects.size();

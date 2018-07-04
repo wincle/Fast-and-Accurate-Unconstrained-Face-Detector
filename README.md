@@ -14,9 +14,9 @@ the detection result is test on FDDB data set (average 400*400)
 
 # NOTICE
 
-  The "1226model" is dump from matlab code which is from References, the model has 1226 stages , if you want to try this model ,you should rename it "result".
+  The "1226model" is dump from matlab code which is from References, this model has 1226 stages.
 
-  You must change the code in detection/LearnGAB.cpp:86~96. Because the difference between matlab and OpenCV. You should also change the coefficient in detection/LearnGAB.cpp:276~279 to fit the model.
+  You must change the code in detection/LearnGAB.cpp:58~64. Because the difference between matlab and OpenCV. You should also change the coefficient in detection/LearnGAB.cpp:262~265 to fit the model.
 
 # How to use
 - you should mkdir data first
@@ -50,11 +50,7 @@ hd.txt(Optional)
 
 the hd image is hard negative for init training , the size of it should to be the same with your model template(24 for me).
 
-The config is in src/common.cpp 
-
-#TODO
-
-Speed Up the Detection and Training
+The config is in common.cpp 
 
 #License
 

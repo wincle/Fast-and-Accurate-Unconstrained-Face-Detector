@@ -11,7 +11,7 @@ void TrainDetector::Detect(){
   Options& opt = Options::GetInstance();
 
   GAB Gab;
-  Gab.LoadModel(opt.outFile);
+  Gab.LoadModel(opt.model_dir);
 
   timeval start, end;
   float time = 0;
@@ -43,7 +43,7 @@ void TrainDetector::FddbDetect(){
   const char* fddb_dir=opt.fddb_dir.c_str();
   string prefix = opt.fddb_dir + string("/");
   GAB Gab;
-  Gab.LoadModel(opt.outFile);
+  Gab.LoadModel(opt.model_dir);
 
   timeval start, end;
   float time = 0;
@@ -92,7 +92,7 @@ void TrainDetector::Live() {
   }
 
   GAB Gab;
-  Gab.LoadModel(opt.outFile);
+  Gab.LoadModel(opt.model_dir);
 
   while (true) {
     Mat frame;

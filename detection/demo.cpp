@@ -3,8 +3,9 @@
 using namespace std;
 
 /*! \breif command help */
-static const char help[] = "NPD\n\n"
-"test:   test FDDB data\n"
+static const char help[] = "NPD\n"
+"test:   test one image\n"
+"fddb:   test FDDB data\n"
 "live:   live demo with camera support\n";
 
 /*!
