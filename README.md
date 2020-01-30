@@ -56,6 +56,12 @@ The config is in common.cpp
 
 BSD 3-Clause
 
+# Python Implemention
+
+https://github.com/wincle/NPD_python
+
+(It's much slow than C++ implementisn. PR is welcomed)
+
 # References
 
 http://www.cbsr.ia.ac.cn/users/scliao/projects/npdface/index.html
